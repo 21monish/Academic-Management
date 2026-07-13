@@ -1,0 +1,1219 @@
+GTU-ITR Academic Management System - Application User Guide
+===========================================================
+
+Last updated: 11 July 2026
+
+Project folder:
+C:\xampp\htdocs\GTU-ITR
+
+Default local URL:
+http://localhost:8000
+
+
+1. What This Application Does
+-----------------------------
+
+GTU-ITR is a Laravel academic management system for institution setup,
+academic masters, staff, students, attendance, exams, fees, leave, notices,
+reports, user accounts, direct permissions, dashboards, chatbot support, and
+campus automation.
+
+The application is permission-aware. After login, users see only the menu items,
+dashboard cards, records, and actions allowed by their role, direct permissions,
+and hierarchy scope.
+
+The main hierarchy is:
+
+1. University
+2. College
+3. Department
+4. Programme
+5. Semester
+6. Subject
+7. Staff and Students
+
+
+2. Starting The Application Locally
+-----------------------------------
+
+Before opening the app:
+
+1. Start XAMPP.
+2. Start Apache.
+3. Start MySQL.
+4. Confirm the database exists:
+   gtu_itr
+
+From the project folder, run:
+
+php artisan serve
+
+Then open:
+
+http://localhost:8000
+
+The public pages are available before login:
+
+- /
+- /features
+- /modules
+- /about
+- /contact
+- /login
+
+Important:
+MySQL must be running for login, dashboards, and every data screen. The local
+configuration uses file sessions and file cache, but users, permissions,
+students, fees, exams, notices, and other records are stored in MySQL.
+
+
+3. Fresh Installation Setup
+---------------------------
+
+Run these commands from:
+C:\xampp\htdocs\GTU-ITR
+
+composer install
+npm install
+npm run build
+php artisan key:generate
+php artisan migrate
+php artisan db:seed
+
+The default seeder runs:
+
+- RolePermissionSeeder
+- SystemSettingSeeder
+- SuperAdminSeeder
+- ChatbotKnowledgeSeeder
+
+Fresh Super Admin login:
+
+Username: admin
+Email: admin@gtu-erp.local
+Password: ChangeMe123!
+
+On first login, the Super Admin is forced to change this password.
+
+
+4. Optional Demo Data
+---------------------
+
+For a fuller demonstration database, run:
+
+php artisan db:seed --class=Database\\Seeders\\DemoDataSeeder
+
+The demo seeder creates sample universities, colleges, departments,
+programmes, subjects, staff, students, users, and related records.
+
+Common demo-style accounts created by the demo seeder may include:
+
+- admin / ChangeMe123!
+- demo.admin / password
+- demo.hod / password
+- demo.faculty / password
+- demo.student / password
+
+Only use demo data in a local or test environment.
+
+To reset demo data from the UI, authorized users can use the dashboard
+automation "Reset Demo Data". It runs the demo cleanup and demo seeders when
+those classes exist.
+
+
+5. Login, Logout, And Password Change
+-------------------------------------
+
+Login:
+
+1. Open http://localhost:8000/login.
+2. Select login type:
+   Administration, Staff, or Student.
+3. Enter username or email.
+4. Enter password.
+5. Sign in.
+
+Login type rules:
+
+- Administration checks administrator-style accounts created from
+  Institution > Users.
+- Staff checks linked staff accounts created from People > Staff.
+- Student checks linked student accounts created from People > Students.
+
+Staff and Student users should not be manually created from Institution > Users.
+Create the Staff or Student record first; the system creates the linked login
+account automatically.
+
+Logout:
+
+1. Use Exit or Log Out from the sidebar or mobile menu.
+2. The app ends your session and returns you to the public area.
+
+Forced password change:
+
+If "must change password" is enabled on your account, the sidebar only shows
+Change Password until the password is updated. The account needs
+password_change.view and password_change.update permissions to complete this.
+
+
+6. Main Screen Layout
+---------------------
+
+After login, the application shows:
+
+- A desktop sidebar.
+- A mobile menu on smaller screens.
+- Role and email information.
+- Dashboard link.
+- Permission-based module sections.
+- Profile link when profile.view is allowed.
+- Exit or Log Out button.
+
+Branding is dynamic:
+
+- If the logged-in user belongs to a university with a logo, that university
+  name and logo are shown.
+- Otherwise, global branding from System Settings is used.
+
+If a menu item is missing, the usual causes are:
+
+- The user does not have the required permission.
+- The user's hierarchy scope excludes that data.
+- The user must change their password first.
+- The route/module is not available to that account type.
+
+
+7. Dashboards
+-------------
+
+The dashboard is role-aware and permission-aware.
+
+General dashboards can show:
+
+- Campus snapshot metrics.
+- Quick links filtered by permissions.
+- Analytics cards and charts.
+- Recent notices in the user's scope.
+- Recent activity if activity_log.view is allowed.
+- One-click automation buttons when the user has the required permissions.
+
+Student dashboard can show:
+
+- Student profile summary.
+- Enrollment number, programme, semester, academic year, college, and status.
+- Attendance health.
+- Fee balance and paid amount.
+- Subject-wise attendance summaries.
+- Results.
+- Fee ledgers.
+- Recent notices.
+- Student quick links.
+
+If a student login opens the student dashboard but no student profile appears,
+the user account is active but not linked to a student record. An administrator
+should connect the user to the correct student record or recreate the student
+login with the correct programme/reference.
+
+
+8. Roles, Permissions, And Scope
+--------------------------------
+
+The current seeded system roles are:
+
+- Super Admin
+- Admin
+- Student
+
+Legacy/common operational role names may exist or be created as institution
+roles:
+
+- University Admin
+- Principal
+- HOD
+- Teaching Staff
+- Non-Teaching Staff
+- Accountant
+
+Important permission rule:
+Roles classify users, help set hierarchy, and can carry default permissions,
+but the application also supports direct model-wise user permissions. If a user
+can log in but cannot see a menu or perform an action, edit that user and grant
+the exact permission needed.
+
+Permission format:
+
+module.action
+
+Examples:
+
+- dashboard.view
+- university.view
+- college.create
+- department.update
+- user_permission.update
+- programme.view
+- staff_assignment.create
+- lecture.update
+- marks_entry.update
+- fee_collection.create
+- notice.approve
+- system_settings.update
+
+Common action meanings:
+
+- view: open the page and read records.
+- create: add records or run create actions.
+- update: edit, activate, deactivate, or modify records.
+- delete: delete where the screen allows deletion.
+- approve: approve or publish workflows where supported.
+- ask: ask the chatbot.
+- teach: add chatbot knowledge where enabled.
+
+Hierarchy scope:
+
+- Super Admin can work system-wide.
+- Admin / University Admin is normally university-scoped.
+- Principal is normally college-scoped.
+- HOD is normally department/programme-scoped.
+- Teaching Staff is normally staff/subject/semester-scoped.
+- Student is normally own profile/programme-scoped.
+
+The app infers scope from user fields and linked staff/student records:
+
+- university_id
+- college_id
+- dept_id
+- programme_id
+- reference_type and reference_id
+- staff email match when reference is not set
+- active teaching staff subject assignments
+
+
+9. User And Role Management
+---------------------------
+
+Menu:
+
+Institution > Users
+Institution > Roles & Permissions
+
+Create or edit a role:
+
+1. Open Institution > Roles & Permissions.
+2. Add or edit a role.
+3. Enter role name, description, university if applicable, and active status.
+4. Save.
+
+Create or edit a user:
+
+1. Open Institution > Users.
+2. Add or edit a user.
+3. Enter username, email, phone, password if needed, role, and scope fields.
+4. Set Active and Verified status.
+5. Enable Force Password Change for new/manual accounts when appropriate.
+6. Assign direct permissions in the User Permissions section.
+7. Save.
+
+Use Institution > Users for Administration accounts and for adjusting existing
+permissions/status. Do not manually create Staff or Student login accounts here;
+create staff from People > Staff and students from People > Students so the
+profile and login stay linked correctly.
+
+User fields:
+
+- Username: login name, such as admin, hod.ce, faculty.ce, or student.1001.
+- Email: must be unique.
+- Role: controls dashboard type and common hierarchy behavior.
+- University: required for university-level accounts.
+- College: useful for principal, accountant, and college staff.
+- Department: required for many HOD and department-level accounts.
+- Programme: required for student accounts and programme-scoped users.
+- Phone: optional contact number.
+- Password: required for new users; leave blank when editing unless changing it.
+- Active: inactive users cannot log in.
+- Verified: usually checked for manually created internal accounts.
+- Force Password Change: makes the user update password on next login.
+- Direct permissions: exact page/action permissions for this user.
+
+Deactivate instead of delete when the user is connected to historic payments,
+marks, notices, attendance, or activity logs.
+
+
+10. Recommended Data Entry Order
+--------------------------------
+
+For a clean setup, enter data in this order:
+
+1. University
+2. College
+3. Department
+4. People Categories
+5. Programme
+6. Academic Year
+7. Semester
+8. Subject
+9. Curriculum
+10. Elective Groups
+11. Staff
+12. Students
+13. Teaching Staff Subject Assignments
+14. Timetable Slots
+15. User accounts and permissions
+16. Attendance, exams, fees, leave, notices, and reports
+
+This order avoids missing dropdown options and foreign-key errors.
+
+
+11. Institution Module
+----------------------
+
+Menu:
+
+Institution > Universities
+Institution > Colleges
+Institution > Departments
+Institution > Users
+Institution > Roles & Permissions
+
+Universities:
+
+Use this to manage university master records. Supported data includes name,
+address, phone, email, website, established date, logo upload/path, UPI ID,
+UPI name, UPI note prefix, and theme. University logo/branding can appear in
+the sidebar for users scoped to that university.
+
+Colleges:
+
+Use this to create colleges under a university. Typical fields include code,
+name, address, phone, email, principal name, affiliation type, college type,
+affiliated date, and active status.
+
+Departments:
+
+Use this to create departments under a college. Typical fields include code,
+name, description, HOD staff ID, and active status.
+
+Users:
+
+Use this to create login accounts, assign roles, choose hierarchy scope,
+activate/deactivate accounts, force password changes, and grant direct
+permissions.
+
+Roles & Permissions:
+
+Use this to create and maintain role names. Access is ultimately enforced
+through permissions attached to roles and/or directly to users.
+
+
+12. People Module
+-----------------
+
+Menu:
+
+People > Staff
+People > Subject Assignments
+People > Students
+People > People Categories
+
+Staff:
+
+1. Open People > Staff.
+2. Add Staff.
+3. Select college and department.
+4. Enter employee code, name, gender, date of birth, phone, email, address,
+   photo, staff type, employment type, joining date, and active status.
+5. For Teaching staff, enter qualification, specialization, designation,
+   experience, and research details where available.
+6. For Non-Teaching staff, enter role, section, and grade where available.
+7. Save.
+
+When staff is saved with an email, the system automatically creates or updates
+the linked Staff login user. The username is the employee code. The first
+password is the date of birth in ddmmyyyy format when date of birth exists;
+otherwise the employee code is used. The generated user is forced to change
+password on first login. After saving, the success message shows the generated
+username and first password.
+
+Students:
+
+1. Open People > Students.
+2. Add Student.
+3. Select college, programme, category, and academic/admission details.
+4. Enter enrollment number, first name, last name, gender, date of birth,
+   contact details, guardian details, address, admission date, admission type,
+   photo, and active status.
+5. Save.
+6. Open the student record to manage enrollments and elective choices.
+7. The system automatically creates or updates the linked Student login account.
+   The username is the enrollment number. The first password is the student's
+   date of birth in ddmmyyyy format, and the student must change it on first
+   login.
+
+People Categories:
+
+Use this for categories such as General, EWS, SC, ST, OBC, TFWS, Management,
+or other local admission/student categories.
+
+Subject Assignments:
+
+This is the same staff assignment workflow also available under Attendance.
+It connects teaching staff with subject, semester, college, lecture type, and
+academic year.
+
+
+13. Academic Module
+-------------------
+
+Menu:
+
+Academic > Academic Years
+Academic > Programmes
+Academic > Semesters
+Academic > Subjects
+Academic > Curriculum
+Academic > Elective Groups
+
+Academic Years:
+
+Create academic sessions such as 2026-27. Mark the current year as active when
+needed.
+
+Programmes:
+
+Create degree programmes such as B.E. Computer Engineering or M.E. Computer
+Engineering. Programmes belong to departments and include code, name, level,
+duration in semesters, total credits, and active status. The programme screen
+supports listing, filtering, sorting, viewing, creating, editing, deleting,
+activating, and deactivating where permissions allow.
+
+Semesters:
+
+Create semesters under programmes. Semesters can be activated or deactivated.
+
+Subjects:
+
+Create subjects under departments. Typical fields include subject code, name,
+type, category, credits, theory/lab/tutorial hours, elective status, and active
+status. Subjects can be activated or deactivated.
+
+Curriculum:
+
+Map subjects to programmes and semesters. This determines which subjects are
+available for a programme/semester.
+
+Elective Groups:
+
+Create elective groups and attach elective subjects so students can choose from
+available options.
+
+
+14. Attendance Module
+---------------------
+
+Menu:
+
+Attendance > Teaching Staff Subject Assignments
+Attendance > Timetable Slots
+Attendance > Lectures
+Attendance > Attendance Summary
+Attendance > Defaulters
+
+Typical workflow:
+
+1. Create Staff Assignments.
+   Assign staff to subject, semester, college, lecture type, and academic year.
+
+2. Create Timetable Slots.
+   Define day, start time, end time, subject, staff, room, lecture type, and
+   academic year.
+
+3. Create Lectures.
+   Create a lecture from a slot, enter lecture date and topic covered.
+
+4. Mark Attendance.
+   Open a lecture and mark each student Present, Absent, Late, or Excused.
+
+5. Review Attendance Summary.
+   View total lectures, attended lectures, and attendance percentage.
+
+6. Review Defaulters.
+   Find students below the attendance threshold.
+
+Teaching staff visibility:
+
+Teaching Staff users are scoped through their linked staff record and active
+staff subject assignments. If assignments are missing, confirm the staff record
+email/reference and assignment status.
+
+
+15. Exams Module
+----------------
+
+Menu:
+
+Exams > Exams
+Exams > Exam Subjects
+Exams > Grade Master
+Exams > Marks Entry
+Exams > Results
+Exams > Backlogs
+Exams > Promotions
+Exams > Hall Ticket Config
+Exams > Hall Tickets
+Exams > Exam Rooms
+Exams > Seating
+Exams > Invigilators
+Exams > Practical Schedule
+Exams > Practical Batches
+Exams > Practical Marks
+
+Theory exam workflow:
+
+1. Create Exam.
+   Select college, academic year, semester, exam type, start date, end date,
+   and published status.
+
+2. Add Exam Subjects.
+   Attach subjects to the exam and set exam date, time, maximum marks, and
+   passing marks.
+
+3. Configure Grade Master.
+   Define grade letters, percentage ranges, grade points, and descriptions.
+
+4. Enter Marks.
+   Select exam subject, load students, enter theory/practical/internal marks,
+   and save.
+
+5. Review Results.
+   View generated result rows, status, SGPA/CGPA summaries where available,
+   and publication status.
+
+6. Track Backlogs.
+   Record and review failed or ATKT subjects.
+
+7. Manage Promotions.
+   Create or approve promotion decisions based on result and attendance data.
+
+Exam logistics workflow:
+
+1. Hall Ticket Config:
+   Configure issue dates, minimum attendance percentage, fee clearance
+   requirement, signatures, seal, instructions, and active status.
+
+2. Hall Tickets:
+   Generate or recheck hall tickets for eligible students.
+
+3. Exam Rooms:
+   Create rooms with room number, building, floor, capacity, type, and status.
+
+4. Seating:
+   Assign students to schedules, rooms, seats, and hall tickets.
+
+5. Invigilators:
+   Assign staff to exam rooms or schedules.
+
+Practical workflow:
+
+1. Create Practical Schedule.
+2. Create Practical Batches.
+3. Add students to batches.
+4. Enter Practical Marks.
+
+
+16. Fees Module
+---------------
+
+Menu:
+
+Fees > Fee Categories
+Fees > Fee Structures
+Fees > Student Ledgers
+Fees > Fee Collection
+Fees > Receipts
+Fees > Concessions
+Fees > Scholarships
+Fees > Fee Reports
+
+Typical workflow:
+
+1. Fee Categories:
+   Create fee heads such as Tuition Fee, Exam Fee, Library Fee, Hostel Fee, or
+   Lab Fee.
+
+2. Fee Structures:
+   Define fee amount by college, programme, academic year, semester, fee
+   category, optional student category, late fine, due date, and active status.
+
+3. Student Ledgers:
+   Review or create ledgers. Ledgers track total amount, paid amount, balance,
+   payment status, and hall-ticket clearance.
+
+4. Fee Collection:
+   Select ledger/student, enter amount paid, payment date, mode, transaction
+   reference, bank/cheque details if applicable, and remarks.
+
+5. Receipts:
+   View and print receipts.
+
+6. Concessions:
+   Record and approve fee concessions where applicable.
+
+7. Scholarships:
+   Record scholarship support.
+
+8. Fee Reports:
+   Review collections and pending balances.
+
+UPI note:
+University UPI settings are managed in the University form and can be used by
+payment QR or UPI-oriented fee screens.
+
+
+17. Leave Module
+----------------
+
+Menu:
+
+Leave > Leave Types
+Leave > Leave Balances
+Leave > Applications
+Leave > Approvals
+Leave > Cancellations
+Leave > Substitutes
+Leave > Holiday Calendar
+
+Typical workflow:
+
+1. Create Leave Types such as CL, SL, EL, academic duty, or unpaid leave.
+2. Assign Leave Balances to staff.
+3. Submit or record Leave Applications.
+4. Approve or reject applications.
+5. Record Cancellations if leave is withdrawn.
+6. Assign Substitutes for duties or lectures.
+7. Maintain Holiday Calendar for planning.
+
+
+18. Notices Module
+------------------
+
+Menu:
+
+Notices > Notice Categories
+Notices > Notices
+Notices > Audience
+Notices > Attachments
+Notices > Acknowledgements
+
+Typical workflow:
+
+1. Create Notice Categories such as Academic, Exam, Fees, Event, or Urgent.
+2. Create Notice title, content, priority, valid dates, pinned status,
+   published status, and acknowledgement requirement.
+3. Choose Audience: all users, selected college, department, programme,
+   semester, role, or user depending on the form.
+4. Upload Attachments.
+5. Track Acknowledgements when required.
+
+Dashboard notices are filtered to the logged-in user's scope and permissions.
+
+
+19. Reports And Printing
+------------------------
+
+Menu:
+
+Reports > Student Reports
+Reports > Attendance Reports
+Reports > Result Cards
+Reports > Fee Receipts
+Reports > Hall Ticket PDF
+Reports > Staff Reports
+Reports > Activity Logs
+Reports > System Settings
+Reports > System Health
+
+Student Reports:
+View and print student profiles.
+
+Attendance Reports:
+Review attendance summaries and low-attendance records.
+
+Result Cards:
+View and print student result cards.
+
+Fee Receipts:
+View and print fee receipts.
+
+Hall Ticket PDF:
+View and print hall tickets.
+
+Staff Reports:
+View and print staff profiles.
+
+Activity Logs:
+Review important create/update/delete and request activity. Usually limited to
+high-privilege users.
+
+System Settings:
+Manage global application branding and support details, and view runtime
+configuration.
+
+System Health:
+View system status checks and environment information where permitted.
+
+Export:
+The reports controller includes an export route for report types. Use it only
+where the UI exposes an export action and the user has the related report
+permission.
+
+
+20. System Settings
+-------------------
+
+Menu:
+
+Reports > System Settings
+
+The System Settings page manages global application branding:
+
+- Application Name
+- Application Subtitle
+- Created / Developed By
+- Creator Contact
+- Support Email
+- Support Phone
+- Footer Text
+- Logo URL / saved path
+- Logo upload
+
+The same page also shows read-only runtime configuration:
+
+- APP_NAME, APP_ENV, APP_DEBUG, APP_URL
+- Database connection, host, port, database, username, password status
+- Session driver and lifetime
+- Cache store
+- Queue connection
+- Filesystem disk
+- Mail configuration
+- Application key status
+- Cookie/session security settings
+- Base, storage, public, and upload paths
+- Maintenance mode status
+
+After changing .env, run:
+
+php artisan config:clear
+
+
+21. Profile
+-----------
+
+Use Profile from the sidebar when profile.view is allowed.
+
+Depending on permissions, users can:
+
+- View profile information.
+- Update profile information.
+- Update password.
+- Delete profile where profile.delete is allowed.
+
+Use Change Password when forced by the system or whenever a password needs to
+be updated.
+
+
+22. Chatbot
+-----------
+
+The application includes chatbot routes for logged-in users.
+
+Permissions:
+
+- chatbot.ask: ask the chatbot.
+- chatbot.teach: add or manage chatbot knowledge where the teaching route is
+  enabled.
+
+Default chatbot knowledge is seeded by ChatbotKnowledgeSeeder.
+
+
+23. Dashboard Automations
+-------------------------
+
+Authorized users may see one-click automation buttons on the dashboard.
+
+Available tasks can include:
+
+- Run All Automations
+- Backup System
+- Generate ID Cards
+- Refresh Attendance
+- Send Fee Reminders
+- Generate Timetable
+- Refresh Dashboard
+- Clear Fee Ledgers
+- Generate Hall Tickets
+- Publish Results
+- Promote Students
+- Publish Notices
+- Reset Demo Data
+
+Each automation appears only when the user has one of its required permissions.
+
+Examples:
+
+- Backup System needs high-level system/settings permissions.
+- Generate ID Cards needs student report/student view permissions.
+- Refresh Attendance needs attendance summary/report permissions.
+- Fee Reminders need ledger/report/notice permissions.
+- Generate Hall Tickets needs hall_ticket.create.
+- Promote Students needs promotion create or approve permission.
+
+Backup files are written under storage/app/backups. Generated ID card HTML is
+written under storage/app/generated/id-cards.
+
+
+24. Uploads And Generated Files
+-------------------------------
+
+Common upload locations:
+
+- public/uploads/photos
+- public/uploads/logos
+- public/uploads/notices
+- storage/app/uploads/documents
+- storage/app/uploads/notices
+
+Common generated locations:
+
+- storage/app/generated/id-cards
+- storage/app/generated/halltickets
+- storage/app/generated/receipts
+- storage/app/generated/results
+- storage/app/backups
+
+Before moving to production, ensure upload directories are writable and run
+storage linking if the deployment requires it:
+
+php artisan storage:link
+
+
+25. Creating Common Accounts
+----------------------------
+
+Create a Super Admin:
+
+1. Run php artisan db:seed on a fresh database.
+2. Log in as admin / ChangeMe123!
+3. Change the password.
+4. Use this account for system setup and emergency administration.
+
+Create a University Admin:
+
+1. Create the university.
+2. Open Institution > Users.
+3. Add User.
+4. Select Admin or a University Admin role.
+5. Select the University.
+6. Add direct permissions for college, department, user, role, staff, student,
+   academic, exam, fee, notice, reports, settings, or health as needed.
+7. Save.
+
+Create a Principal:
+
+1. Create university and college.
+2. Create a Principal role if needed.
+3. Create or link staff record if the principal should appear under Staff.
+4. Create user with University and College scope.
+5. Grant college-level permissions.
+6. Save.
+
+Create an HOD:
+
+1. Create department.
+2. Create staff record.
+3. Set department HOD staff ID if applicable.
+4. Create user with HOD role and Department scope.
+5. Grant department/programme/student/staff/attendance/exam/notice permissions.
+6. Save.
+
+Create Teaching Staff:
+
+1. Open People > Staff.
+2. Add teaching staff with employee code, email, department, and teaching
+   details.
+3. Save and let the system create/link the user.
+4. Create staff subject assignments.
+5. Edit generated user permissions if needed.
+
+Create Non-Teaching Staff:
+
+1. Open People > Staff.
+2. Add non-teaching staff.
+3. Save and let the system create/link the user.
+4. Edit generated user role, scope, and permissions as needed.
+
+Create an Accountant:
+
+1. Create a non-teaching staff record.
+2. Create or edit user with Accountant role.
+3. Grant fee_category, fee_structure, student_ledger, fee_collection, receipt,
+   concession, scholarship, fee_report, and fee_receipt_report permissions as
+   needed.
+
+Create a Student:
+
+1. Create college, department, programme, academic year, semester, and category.
+2. Open People > Students.
+3. Add student and save.
+4. The linked Student login is created automatically.
+5. Tell the student to log in with username = enrollment number and first
+   password = date of birth in ddmmyyyy format.
+6. Add student enrollment if required.
+7. Open Institution > Users only if you need to adjust role, scope, active
+   status, or permissions.
+8. Grant extra student-facing permissions such as dashboard.view, profile.view,
+   password_change.view/update, notice.view, notice_acknowledgement.create,
+   attendance_summary.view, result.view, receipt.view, result_card.view, and
+   hall_ticket.view as needed.
+
+
+26. Common Problems And Fixes
+-----------------------------
+
+Problem:
+SQLSTATE[HY000] [2002] No connection could be made because the target machine
+actively refused it.
+
+Meaning:
+MySQL is not running or Laravel cannot connect to MySQL.
+
+Fix:
+
+1. Open XAMPP Control Panel.
+2. Start MySQL.
+3. Check .env:
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=gtu_itr
+   DB_USERNAME=root
+   DB_PASSWORD=
+4. Run:
+   php artisan config:clear
+5. Refresh the page.
+
+Problem:
+Login page opens, but login fails with database error.
+
+Meaning:
+The users table cannot be read because MySQL is unavailable or migrations have
+not run.
+
+Fix:
+
+1. Start MySQL.
+2. Confirm gtu_itr exists.
+3. Run:
+   php artisan migrate
+   php artisan db:seed
+
+Problem:
+Menu item is missing.
+
+Meaning:
+The account lacks the required permission, is scoped away from the data, or is
+still forced to change password.
+
+Fix:
+Ask an administrator to edit the user and grant the required permission from:
+Institution > Users
+
+Problem:
+403 Forbidden.
+
+Meaning:
+The user is logged in but does not have permission for that route/action.
+
+Fix:
+Grant the exact module.action permission required by the page.
+
+Problem:
+419 Page Expired.
+
+Meaning:
+The session expired or the CSRF token is stale.
+
+Fix:
+Refresh the page, log in again if needed, and submit the form again.
+
+Problem:
+Uploaded logo/photo does not appear.
+
+Fix:
+
+1. Confirm the file exists under public/uploads or the configured path.
+2. Confirm the path stored in the database is public or starts with a valid URL.
+3. Run storage link if the file is stored under storage/app/public:
+   php artisan storage:link
+
+Problem:
+Teaching Staff cannot see assignments.
+
+Fix:
+
+1. Confirm the staff record email matches the user email or user reference.
+2. Confirm staff_assignment records are active.
+3. Confirm the user has staff_assignment.view.
+4. Confirm the staff member is assigned to the relevant subject and semester.
+
+
+27. Useful Administrator Commands
+---------------------------------
+
+Run these from:
+C:\xampp\htdocs\GTU-ITR
+
+Install PHP dependencies:
+composer install
+
+Install frontend dependencies:
+npm install
+
+Build frontend assets:
+npm run build
+
+Generate application key:
+php artisan key:generate
+
+Run migrations:
+php artisan migrate
+
+Seed default data:
+php artisan db:seed
+
+Seed demo data:
+php artisan db:seed --class=Database\\Seeders\\DemoDataSeeder
+
+Clear config:
+php artisan config:clear
+
+Clear cache:
+php artisan cache:clear
+
+Clear all optimized caches:
+php artisan optimize:clear
+
+Cache config for production:
+php artisan config:cache
+
+Create storage link:
+php artisan storage:link
+
+Show routes:
+php artisan route:list
+
+Show programme routes:
+php artisan route:list --path=programmes
+
+Run tests:
+php artisan test
+
+Start local server:
+php artisan serve
+
+
+28. Safe Usage Tips
+-------------------
+
+- Change the default Super Admin password immediately.
+- Keep Super Admin access limited to trusted administrators.
+- Enter master data before dependent records.
+- Do not delete records already used in payments, marks, attendance, reports,
+  or notices unless you understand the consequences.
+- Prefer deactivate where available.
+- Back up the MySQL database before large imports or destructive changes.
+- Use demo seeders only in local/test environments.
+- Review permissions after creating each operational user.
+- Confirm scope fields when users report missing data.
+
+
+29. Quick Module Checklist
+--------------------------
+
+Initial setup:
+[ ] MySQL running
+[ ] .env database settings correct
+[ ] Migrations complete
+[ ] Default seed complete
+[ ] Super Admin password changed
+[ ] System Settings reviewed
+
+Institution:
+[ ] University created
+[ ] University logo/UPI/theme configured if needed
+[ ] College created
+[ ] Departments created
+[ ] Roles reviewed
+[ ] Users and permissions created
+
+Academic:
+[ ] People categories created
+[ ] Programmes created
+[ ] Academic year created
+[ ] Semesters created
+[ ] Subjects created
+[ ] Curriculum mapped
+[ ] Elective groups created if required
+
+People:
+[ ] Staff records created
+[ ] Student records created
+[ ] Student enrollments created
+[ ] Staff/student user accounts linked
+[ ] User scopes checked
+
+Attendance:
+[ ] Teaching staff subject assignments created
+[ ] Timetable slots created
+[ ] Lectures created
+[ ] Attendance marked
+[ ] Summaries refreshed/reviewed
+[ ] Defaulters reviewed
+
+Exams:
+[ ] Exam created
+[ ] Exam subjects configured
+[ ] Grade master configured
+[ ] Marks entered
+[ ] Results reviewed/published
+[ ] Backlogs reviewed
+[ ] Promotions reviewed
+[ ] Hall ticket config created
+[ ] Hall tickets generated
+[ ] Seating and invigilators assigned if required
+
+Fees:
+[ ] Fee categories created
+[ ] Fee structures created
+[ ] Student ledgers reviewed
+[ ] Payments collected
+[ ] Receipts printed
+[ ] Concessions/scholarships recorded if required
+
+Communication:
+[ ] Notice categories created
+[ ] Notices published
+[ ] Audience selected
+[ ] Attachments uploaded if needed
+[ ] Acknowledgements checked if required
+
+Reports:
+[ ] Student reports checked
+[ ] Attendance reports checked
+[ ] Result cards printed
+[ ] Fee receipts printed
+[ ] Hall tickets printed
+[ ] Staff reports checked
+[ ] Activity logs reviewed
+
+
+End of guide.

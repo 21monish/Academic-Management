@@ -1,0 +1,53 @@
+@media print {
+    body {
+        color: #111827;
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+    }
+
+    .print-sheet {
+        margin: 0 auto;
+        max-width: 900px;
+    }
+
+    .print-header {
+        align-items: center;
+        border-bottom: 1px solid #cbd5e1;
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+    }
+
+    .print-brand {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+    }
+
+    .print-logo {
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        height: 54px;
+        object-fit: contain;
+        padding: 4px;
+        width: 54px;
+    }
+
+    .print-app-name {
+        font-size: 17px;
+        font-weight: 800;
+    }
+
+    .print-subtitle,
+    .print-meta {
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+}

@@ -1,0 +1,266 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+@layer components {
+    .app-shell,
+    .guest-shell {
+        --theme-primary: #0e7490;
+        --theme-primary-hover: #155e75;
+        --theme-primary-soft: #ecfeff;
+        --theme-primary-ring: #a5f3fc;
+        --theme-primary-border: #a5f3fc;
+        --theme-primary-shadow: 14 116 144;
+    }
+
+    .theme-royal {
+        --theme-primary: #4f46e5;
+        --theme-primary-hover: #3730a3;
+        --theme-primary-soft: #eef2ff;
+        --theme-primary-ring: #a5b4fc;
+        --theme-primary-border: #c7d2fe;
+        --theme-primary-shadow: 79 70 229;
+    }
+
+    .theme-royal .bg-cyan-50 { background-color: #eef2ff; }
+    .theme-royal .bg-cyan-100 { background-color: #e0e7ff; }
+    .theme-royal .bg-cyan-600, .theme-royal .bg-cyan-700 { background-color: #4f46e5; }
+    .theme-royal .hover\:bg-cyan-800:hover { background-color: #3730a3; }
+    .theme-royal .text-cyan-700, .theme-royal .text-cyan-800, .theme-royal .text-cyan-900, .theme-royal .text-cyan-950 { color: #3730a3; }
+    .theme-royal .border-cyan-100, .theme-royal .border-cyan-200 { border-color: #c7d2fe; }
+    .theme-royal .focus\:border-cyan-600:focus { border-color: #4f46e5; }
+    .theme-royal .focus\:ring-cyan-600:focus, .theme-royal .focus\:ring-cyan-200:focus { --tw-ring-color: #a5b4fc; }
+
+    .theme-forest {
+        --theme-primary: #059669;
+        --theme-primary-hover: #047857;
+        --theme-primary-soft: #ecfdf5;
+        --theme-primary-ring: #6ee7b7;
+        --theme-primary-border: #a7f3d0;
+        --theme-primary-shadow: 5 150 105;
+    }
+
+    .theme-forest .bg-cyan-50 { background-color: #ecfdf5; }
+    .theme-forest .bg-cyan-100 { background-color: #d1fae5; }
+    .theme-forest .bg-cyan-600, .theme-forest .bg-cyan-700 { background-color: #059669; }
+    .theme-forest .hover\:bg-cyan-800:hover { background-color: #047857; }
+    .theme-forest .text-cyan-700, .theme-forest .text-cyan-800, .theme-forest .text-cyan-900, .theme-forest .text-cyan-950 { color: #047857; }
+    .theme-forest .border-cyan-100, .theme-forest .border-cyan-200 { border-color: #a7f3d0; }
+    .theme-forest .focus\:border-cyan-600:focus { border-color: #059669; }
+    .theme-forest .focus\:ring-cyan-600:focus, .theme-forest .focus\:ring-cyan-200:focus { --tw-ring-color: #6ee7b7; }
+
+    .app-shell :is(button, a).ui-action,
+    .guest-shell :is(button, a).ui-action,
+    .app-shell :is(button, a)[class*="bg-cyan-700"],
+    .app-shell :is(button, a)[class*="bg-cyan-600"],
+    .app-shell :is(button, a)[class*="bg-indigo-600"],
+    .app-shell :is(button, a)[class*="bg-gray-800"],
+    .app-shell :is(button, a)[class*="bg-gray-900"],
+    .app-shell :is(button, a)[class*="bg-slate-900"],
+    .guest-shell :is(button, a)[class*="bg-cyan-700"],
+    .guest-shell :is(button, a)[class*="bg-cyan-600"],
+    .guest-shell :is(button, a)[class*="bg-indigo-600"],
+    .guest-shell :is(button, a)[class*="bg-gray-800"],
+    .guest-shell :is(button, a)[class*="bg-gray-900"],
+    .guest-shell :is(button, a)[class*="bg-slate-900"] {
+        border-color: transparent;
+        background: linear-gradient(135deg, var(--theme-primary), var(--theme-primary-hover));
+        box-shadow: 0 10px 22px -14px rgb(var(--theme-primary-shadow) / 0.9), inset 0 1px 0 rgb(255 255 255 / 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .app-shell :is(button, a).ui-action::before,
+    .guest-shell :is(button, a).ui-action::before,
+    .app-shell :is(button, a)[class*="bg-cyan-700"]::before,
+    .app-shell :is(button, a)[class*="bg-cyan-600"]::before,
+    .app-shell :is(button, a)[class*="bg-indigo-600"]::before,
+    .app-shell :is(button, a)[class*="bg-gray-800"]::before,
+    .app-shell :is(button, a)[class*="bg-gray-900"]::before,
+    .app-shell :is(button, a)[class*="bg-slate-900"]::before,
+    .guest-shell :is(button, a)[class*="bg-cyan-700"]::before,
+    .guest-shell :is(button, a)[class*="bg-cyan-600"]::before,
+    .guest-shell :is(button, a)[class*="bg-indigo-600"]::before,
+    .guest-shell :is(button, a)[class*="bg-gray-800"]::before,
+    .guest-shell :is(button, a)[class*="bg-gray-900"]::before,
+    .guest-shell :is(button, a)[class*="bg-slate-900"]::before {
+        background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.28), transparent);
+        content: "";
+        height: 100%;
+        left: -140%;
+        position: absolute;
+        top: 0;
+        transform: skewX(-18deg);
+        transition: left 420ms cubic-bezier(0.22, 1, 0.36, 1);
+        width: 70%;
+    }
+
+    .app-shell :is(button, a).ui-action:hover,
+    .guest-shell :is(button, a).ui-action:hover,
+    .app-shell :is(button, a)[class*="bg-cyan-700"]:hover,
+    .app-shell :is(button, a)[class*="bg-cyan-600"]:hover,
+    .app-shell :is(button, a)[class*="bg-indigo-600"]:hover,
+    .app-shell :is(button, a)[class*="bg-gray-800"]:hover,
+    .app-shell :is(button, a)[class*="bg-gray-900"]:hover,
+    .app-shell :is(button, a)[class*="bg-slate-900"]:hover,
+    .guest-shell :is(button, a)[class*="bg-cyan-700"]:hover,
+    .guest-shell :is(button, a)[class*="bg-cyan-600"]:hover,
+    .guest-shell :is(button, a)[class*="bg-indigo-600"]:hover,
+    .guest-shell :is(button, a)[class*="bg-gray-800"]:hover,
+    .guest-shell :is(button, a)[class*="bg-gray-900"]:hover,
+    .guest-shell :is(button, a)[class*="bg-slate-900"]:hover {
+        box-shadow: 0 16px 30px -16px rgb(var(--theme-primary-shadow) / 1), inset 0 1px 0 rgb(255 255 255 / 0.24);
+        transform: translateY(-1px);
+    }
+
+    .app-shell :is(button, a).ui-action:hover::before,
+    .guest-shell :is(button, a).ui-action:hover::before,
+    .app-shell :is(button, a)[class*="bg-cyan-700"]:hover::before,
+    .app-shell :is(button, a)[class*="bg-cyan-600"]:hover::before,
+    .app-shell :is(button, a)[class*="bg-indigo-600"]:hover::before,
+    .app-shell :is(button, a)[class*="bg-gray-800"]:hover::before,
+    .app-shell :is(button, a)[class*="bg-gray-900"]:hover::before,
+    .app-shell :is(button, a)[class*="bg-slate-900"]:hover::before,
+    .guest-shell :is(button, a)[class*="bg-cyan-700"]:hover::before,
+    .guest-shell :is(button, a)[class*="bg-cyan-600"]:hover::before,
+    .guest-shell :is(button, a)[class*="bg-indigo-600"]:hover::before,
+    .guest-shell :is(button, a)[class*="bg-gray-800"]:hover::before,
+    .guest-shell :is(button, a)[class*="bg-gray-900"]:hover::before,
+    .guest-shell :is(button, a)[class*="bg-slate-900"]:hover::before {
+        left: 130%;
+    }
+
+    .app-shell :is(button, a)[class*="border-slate-200"][class*="text-slate"],
+    .app-shell :is(button, a)[class*="border-gray-300"][class*="text-gray"],
+    .app-shell :is(button, a)[class*="bg-white"][class*="text-slate"],
+    .app-shell :is(button, a)[class*="bg-white"][class*="text-gray"],
+    .guest-shell :is(button, a)[class*="border-slate-200"][class*="text-slate"],
+    .guest-shell :is(button, a)[class*="border-gray-300"][class*="text-gray"],
+    .guest-shell :is(button, a)[class*="bg-white"][class*="text-slate"],
+    .guest-shell :is(button, a)[class*="bg-white"][class*="text-gray"] {
+        background: linear-gradient(180deg, #ffffff, var(--theme-primary-soft));
+        border-color: var(--theme-primary-border);
+        box-shadow: 0 8px 18px -16px rgb(15 23 42 / 0.65);
+    }
+
+    .app-shell :is(button, a)[class*="border-slate-200"][class*="text-slate"]:hover,
+    .app-shell :is(button, a)[class*="border-gray-300"][class*="text-gray"]:hover,
+    .app-shell :is(button, a)[class*="bg-white"][class*="text-slate"]:hover,
+    .app-shell :is(button, a)[class*="bg-white"][class*="text-gray"]:hover,
+    .guest-shell :is(button, a)[class*="border-slate-200"][class*="text-slate"]:hover,
+    .guest-shell :is(button, a)[class*="border-gray-300"][class*="text-gray"]:hover,
+    .guest-shell :is(button, a)[class*="bg-white"][class*="text-slate"]:hover,
+    .guest-shell :is(button, a)[class*="bg-white"][class*="text-gray"]:hover {
+        border-color: var(--theme-primary);
+        box-shadow: 0 12px 26px -18px rgb(var(--theme-primary-shadow) / 0.9);
+        color: var(--theme-primary-hover);
+        transform: translateY(-1px);
+    }
+
+    .app-shell button[class*="text-red"],
+    .app-shell a[class*="text-red"],
+    .guest-shell button[class*="text-red"],
+    .guest-shell a[class*="text-red"] {
+        border-radius: 0.375rem;
+    }
+
+    .app-shell button[class*="text-red"]:hover,
+    .app-shell a[class*="text-red"]:hover,
+    .guest-shell button[class*="text-red"]:hover,
+    .guest-shell a[class*="text-red"]:hover {
+        background-color: #fef2f2;
+        box-shadow: 0 10px 22px -18px rgb(220 38 38 / 0.9);
+        transform: translateY(-1px);
+    }
+
+    .app-shell :is(button, a):focus-visible,
+    .guest-shell :is(button, a):focus-visible {
+        outline: 2px solid var(--theme-primary-ring);
+        outline-offset: 2px;
+    }
+
+    .page-enter {
+        animation: page-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .app-shell :is(a, button, input, select, textarea),
+    .guest-shell :is(a, button, input, select, textarea) {
+        transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+        transition-duration: 200ms;
+        transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .app-shell button:not(:disabled):active,
+    .app-shell [role='button']:active,
+    .guest-shell button:not(:disabled):active,
+    .guest-shell [role='button']:active {
+        transform: scale(0.98);
+    }
+
+    .app-shell table {
+        width: 100%;
+    }
+
+    .app-shell [data-table-scroll-wrapper="true"] {
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .app-shell .nav-dropdown > summary {
+        transition: background-color 180ms cubic-bezier(0.22, 1, 0.36, 1), color 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1), transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .app-shell .nav-dropdown > summary:hover {
+        transform: translateX(2px);
+    }
+
+    .app-shell .nav-dropdown[open] > .nav-dropdown-panel {
+        animation: nav-dropdown-enter 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        transform-origin: top;
+    }
+}
+
+@keyframes page-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes nav-dropdown-enter {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scaleY(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scaleY(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .page-enter {
+        animation: none;
+    }
+
+    .app-shell :is(a, button, input, select, textarea),
+    .guest-shell :is(a, button, input, select, textarea) {
+        transition-duration: 0ms;
+    }
+}
