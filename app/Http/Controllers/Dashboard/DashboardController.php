@@ -133,7 +133,7 @@ class DashboardController extends Controller
     <main>
         <section>
             <h1>{$dashboardTitle}</h1>
-            <p>The advanced dashboard could not load, so this safe dashboard is active. Other modules are still available from their direct URLs.</p>
+            <p>The dashboard is available in a simplified layout. Other modules are still available from their direct URLs.</p>
             <a href="/change-password">Account Settings</a>
         </section>
     </main>
