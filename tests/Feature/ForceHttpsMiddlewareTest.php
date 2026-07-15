@@ -21,3 +21,19 @@ test('forwarded https requests do not redirect again', function () {
 
     $response->assertOk();
 });
+
+test('forced https uses https urls for vite and public assets', function () {
+    config([
+        'app.force_https' => true,
+        'app.url' => 'https://academic-management-uotbt.sevalla.app',
+        'app.asset_url' => 'https://academic-management-uotbt.sevalla.app',
+    ]);
+
+    (new \App\Providers\AppServiceProvider(app()))->boot();
+
+    $viteAsset = app(\Illuminate\Foundation\Vite::class)->asset('resources/css/app.css');
+    $favicon = asset('favicon.svg');
+
+    expect($viteAsset)->toStartWith('https://academic-management-uotbt.sevalla.app/build/assets/');
+    expect($favicon)->toBe('https://academic-management-uotbt.sevalla.app/favicon.svg');
+});

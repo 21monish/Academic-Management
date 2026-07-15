@@ -42,6 +42,7 @@ Copy `.env.sevalla.example` into Sevalla environment variables and fill in:
 
 - `APP_KEY`
 - `APP_URL`
+- `ASSET_URL`
 - `APP_FORCE_HTTPS=true`
 - `TRUSTED_PROXIES=*`
 - `DB_HOST`
@@ -67,7 +68,7 @@ Without persistent storage, uploaded files may disappear after a redeploy depend
 ## Environment
 
 - Set `APP_ENV=production`, `APP_DEBUG=false`, and a real `APP_KEY`.
-- Point `APP_URL` to the HTTPS domain, for example `https://academic-management-uotbt.sevalla.app`.
+- Point `APP_URL` and `ASSET_URL` to the HTTPS domain, for example `https://academic-management-uotbt.sevalla.app`.
 - Set `APP_FORCE_HTTPS=true` and `TRUSTED_PROXIES=*` so Laravel redirects `http` requests and trusts Sevalla's HTTPS proxy headers.
 - Use production database credentials and a non-root database user.
 - Configure mail, queue, cache, and session drivers for the hosting environment.

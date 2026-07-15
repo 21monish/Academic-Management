@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Permission;
+use Illuminate\Foundation\Vite;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -23,7 +24,19 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if (config('app.force_https')) {
+            if ($rootUrl = $this->httpsUrl(config('app.url'))) {
+                URL::forceRootUrl($rootUrl);
+            }
+
             URL::forceScheme('https');
+
+            app(Vite::class)->createAssetPathsUsing(function (string $path): string {
+                if ($assetUrl = $this->httpsUrl(config('app.asset_url') ?: config('app.url'))) {
+                    return rtrim($assetUrl, '/').'/'.ltrim($path, '/');
+                }
+
+                return secure_asset($path);
+            });
         }
 
         $moduleAbilities = [
@@ -64,6 +77,15 @@ class AppServiceProvider extends ServiceProvider
         foreach ($moduleAbilities as $ability) {
             Gate::define($ability, fn ($user) => $this->hasModulePermission($user, $ability));
         }
+    }
+
+    private function httpsUrl(mixed $url): ?string
+    {
+        if (! is_string($url) || trim($url) === '') {
+            return null;
+        }
+
+        return preg_replace('/^http:\/\//i', 'https://', rtrim($url, '/'));
     }
 
     private function hasModulePermission($user, string $ability): bool

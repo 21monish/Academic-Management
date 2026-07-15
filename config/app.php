@@ -54,6 +54,13 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'asset_url' => env(
+        'ASSET_URL',
+        env('APP_FORCE_HTTPS', env('APP_ENV', 'production') === 'production')
+            ? preg_replace('/^http:\/\//i', 'https://', rtrim((string) env('APP_URL', 'http://localhost'), '/'))
+            : null
+    ),
+
     /*
     |--------------------------------------------------------------------------
     | Force HTTPS
@@ -65,7 +72,7 @@ return [
     |
     */
 
-    'force_https' => (bool) env('APP_FORCE_HTTPS', env('APP_ENV') === 'production'),
+    'force_https' => (bool) env('APP_FORCE_HTTPS', env('APP_ENV', 'production') === 'production'),
 
     /*
     |--------------------------------------------------------------------------
