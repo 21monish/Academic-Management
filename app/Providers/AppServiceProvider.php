@@ -3,8 +3,9 @@
 namespace App\Providers;
 
 use App\Models\Permission;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,6 +22,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (config('app.force_https')) {
+            URL::forceScheme('https');
+        }
+
         $moduleAbilities = [
             'programme.view',
             'programme.create',

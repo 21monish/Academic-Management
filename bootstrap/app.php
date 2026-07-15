@@ -11,11 +11,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: env('TRUSTED_PROXIES', '*'));
+
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
             'permission' => \App\Http\Middleware\EnsureUserHasPermission::class,
         ]);
 
+        $middleware->prependToGroup('web', \App\Http\Middleware\ForceHttps::class);
         $middleware->appendToGroup('web', \App\Http\Middleware\SecurityHeaders::class);
         $middleware->appendToGroup('web', \App\Http\Middleware\EnsurePasswordIsChanged::class);
         $middleware->appendToGroup('web', \App\Http\Middleware\ShareAccessScope::class);

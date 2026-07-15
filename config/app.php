@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Force HTTPS
+    |--------------------------------------------------------------------------
+    |
+    | Production hosts such as Sevalla terminate TLS at a proxy before sending
+    | traffic to Laravel. Keep this enabled in production so generated URLs,
+    | form actions, redirects, and cookies stay on HTTPS.
+    |
+    */
+
+    'force_https' => (bool) env('APP_FORCE_HTTPS', env('APP_ENV') === 'production'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

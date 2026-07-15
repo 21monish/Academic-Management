@@ -42,6 +42,8 @@ Copy `.env.sevalla.example` into Sevalla environment variables and fill in:
 
 - `APP_KEY`
 - `APP_URL`
+- `APP_FORCE_HTTPS=true`
+- `TRUSTED_PROXIES=*`
 - `DB_HOST`
 - `DB_DATABASE`
 - `DB_USERNAME`
@@ -65,7 +67,8 @@ Without persistent storage, uploaded files may disappear after a redeploy depend
 ## Environment
 
 - Set `APP_ENV=production`, `APP_DEBUG=false`, and a real `APP_KEY`.
-- Point `APP_URL` to the HTTPS domain.
+- Point `APP_URL` to the HTTPS domain, for example `https://academic-management-uotbt.sevalla.app`.
+- Set `APP_FORCE_HTTPS=true` and `TRUSTED_PROXIES=*` so Laravel redirects `http` requests and trusts Sevalla's HTTPS proxy headers.
 - Use production database credentials and a non-root database user.
 - Configure mail, queue, cache, and session drivers for the hosting environment.
 
@@ -101,6 +104,7 @@ The web/PHP user must be able to write:
 ## Security Notes
 
 - Browser security headers are applied by `SecurityHeaders`.
+- Always open the app with `https://...`; plain `http://...` requests are redirected when `APP_FORCE_HTTPS=true`.
 - Backend module access is enforced by `permission:` middleware, not only by navigation visibility.
 - Student users are limited to dashboard/profile/notices by default. Keep self-service data on scoped dashboard pages unless dedicated row-level routes are added.
 - Do not expose `.env`, `storage/`, `vendor/`, or project root files from the web server. Only `public/` should be web-facing.
