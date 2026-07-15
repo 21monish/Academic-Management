@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Support\ValidationRules;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,8 +34,8 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'username' => ['nullable', 'string', 'max:80', 'unique:'.User::class],
-            'name' => ['nullable', 'string', 'max:80'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'name' => ValidationRules::shortText(false, 80),
+            'email' => [...ValidationRules::email(true, 150), 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 

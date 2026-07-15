@@ -34,7 +34,7 @@
         'department' => 'Departments',
         'user' => 'Users',
         'user_permission' => 'User Permission Updater',
-        'role' => 'Roles & Permissions',
+        'role' => 'Roles',
         'staff' => 'Staff',
         'student' => 'Students',
         'category' => 'People Categories',
@@ -125,10 +125,6 @@
     </x-slot>
 
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        @if (session('status'))
-            <div class="mb-4 rounded-md bg-green-100 p-3 text-sm text-green-800">{{ session('status') }}</div>
-        @endif
-
         <form action="{{ route('users.permissions.update', $user) }}" method="POST" class="space-y-5 rounded-lg bg-white p-6 shadow-sm">
             @csrf
             @method('PATCH')

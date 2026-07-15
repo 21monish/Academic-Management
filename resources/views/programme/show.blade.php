@@ -10,7 +10,6 @@
     </x-slot>
 
     <div class="py-8 max-w-6xl mx-auto sm:px-6 lg:px-8">
-        @include('partials._flash')
 
         <div class="bg-white shadow-sm rounded-lg border border-gray-100 p-6">
             <div class="flex items-start justify-between gap-4">

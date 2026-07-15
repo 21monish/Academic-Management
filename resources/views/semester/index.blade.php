@@ -18,8 +18,6 @@
 
     <div class="py-8 max-w-6xl mx-auto sm:px-6 lg:px-8">
 
-        @include('partials._flash')
-
         {{-- Search Card --}}
         <div class="bg-white shadow-sm rounded-lg border border-gray-100 mb-6 p-4">
 
@@ -54,8 +52,8 @@
 
                         @foreach($programmes as $programme)
 
-                            <option value="{{ $programme->id }}"
-                                @selected(request('programme_id') == $programme->id)>
+                            <option value="{{ $programme->programme_id }}"
+                                @selected(request('programme_id') == $programme->programme_id)>
 
                                 {{ $programme->name }}
 

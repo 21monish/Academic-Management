@@ -11,6 +11,7 @@ use App\Models\University;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Services\AccessScopeService;
+use App\Support\ValidationRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -73,7 +74,7 @@ class UserController extends Controller
         $user = User::create($validated);
         $user->permissions()->sync($permissionIds ?? $this->defaultPermissionIdsForRole($roleId));
 
-        return redirect()->route('users.index')->with('status', 'User created.');
+        return redirect()->route('users.index')->with('status', 'User '.$user->username.' created successfully.');
     }
 
     public function edit(User $user): View|RedirectResponse
@@ -113,7 +114,7 @@ class UserController extends Controller
             $user->permissions()->sync($permissionIds);
         }
 
-        return redirect()->route('users.index')->with('status', 'User updated.');
+        return redirect()->route('users.index')->with('status', 'User '.$user->username.' updated successfully.');
     }
 
     public function editPermissions(User $user): View
@@ -134,7 +135,7 @@ class UserController extends Controller
 
         $user->permissions()->sync($validated['permissions'] ?? []);
 
-        return redirect()->route('users.permissions.edit', $user)->with('status', 'User permissions updated.');
+        return redirect()->route('users.permissions.edit', $user)->with('status', 'User '.$user->username.' permissions updated successfully.');
     }
 
     public function activate(User $user): RedirectResponse
@@ -145,7 +146,7 @@ class UserController extends Controller
 
         $user->update(['is_active' => true]);
 
-        return back()->with('status', 'User activated.');
+        return back()->with('status', 'User '.$user->username.' activated successfully.');
     }
 
     public function deactivate(Request $request, User $user): RedirectResponse
@@ -160,7 +161,7 @@ class UserController extends Controller
 
         $user->update(['is_active' => false]);
 
-        return back()->with('status', 'User deactivated.');
+        return back()->with('status', 'User '.$user->username.' deactivated successfully.');
     }
 
     public function destroy(Request $request, User $user): RedirectResponse
@@ -173,22 +174,26 @@ class UserController extends Controller
             return back()->withErrors(['user' => 'You cannot delete your own account.']);
         }
 
+        $username = $user->username;
+
         $user->delete();
 
-        return redirect()->route('users.index')->with('status', 'User deleted.');
+        return redirect()->route('users.index')->with('status', 'User '.$username.' deleted successfully.');
     }
 
     private function formData(array $extra = []): array
     {
         $user = $extra['user'] ?? null;
         $user?->loadMissing('permissions');
+        $hasRolePermissionsTable = Schema::hasTable('role_permissions');
+
         $roles = $this->accessScope->applyToRoles(
             UserRole::where('is_active', true)
                 ->whereNotIn('role_name', $this->profileManagedRoleNames())
                 ->when(Schema::hasColumn('user_roles', 'staff_type'), fn ($query) => $query->whereNull('staff_type')),
             request()->user()
         )
-            ->with('permissions')
+            ->when($hasRolePermissionsTable, fn ($query) => $query->with('permissions'))
             ->orderBy('role_name')
             ->get();
 
@@ -201,7 +206,9 @@ class UserController extends Controller
             'permissionSections' => $this->permissionSections(),
             'canUpdateUserPermissions' => hasPermission('user_permission.update'),
             'rolePermissionMap' => $roles->mapWithKeys(fn (UserRole $role) => [
-                (string) $role->role_id => $role->permissions->pluck('permission_id')->map(fn ($id) => (int) $id)->values(),
+                (string) $role->role_id => $hasRolePermissionsTable
+                    ? $role->permissions->pluck('permission_id')->map(fn ($id) => (int) $id)->values()
+                    : collect(),
             ]),
             'selectedPermissions' => $user
                 ? $user->permissions->pluck('permission_id')->map(fn ($id) => (int) $id)->all()
@@ -268,12 +275,10 @@ class UserController extends Controller
                 Rule::unique('users', 'username')->ignore($userId, 'user_id'),
             ],
             'email' => [
-                'required',
-                'email',
-                'max:150',
+                ...ValidationRules::email(true, 150),
                 Rule::unique('users', 'email')->ignore($userId, 'user_id'),
             ],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'phone' => ValidationRules::phone(),
             'password' => [$user ? 'nullable' : 'required', 'confirmed', 'min:8'],
             'is_active' => ['sometimes', 'boolean'],
             'is_verified' => ['sometimes', 'boolean'],

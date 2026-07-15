@@ -67,7 +67,7 @@
                 ['label' => 'Colleges', 'route' => 'colleges.index', 'active' => 'colleges.*', 'icon' => 'campus', 'permission' => 'college.view'],
                 ['label' => 'Departments', 'route' => 'departments.index', 'active' => 'departments.*', 'icon' => 'layers', 'permission' => 'department.view'],
                 ['label' => 'Users', 'route' => 'users.index', 'active' => 'users.*', 'icon' => 'users', 'permission' => ['user.view', 'user_permission.view', 'user_permission.update']],
-                ['label' => 'Roles & Permissions', 'route' => 'roles.index', 'active' => 'roles.*', 'icon' => 'shield', 'permission' => 'role.view'],
+                ['label' => 'Roles', 'route' => 'roles.index', 'active' => 'roles.*', 'icon' => 'shield', 'permission' => 'role.view'],
             ],
             'People' => [
                 ['label' => 'Staff', 'route' => 'staff.index', 'active' => 'staff.*', 'icon' => 'briefcase', 'permission' => 'staff.view'],
@@ -191,26 +191,26 @@
 @endphp
 
 <nav>
-    <aside class="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-slate-200 bg-white shadow-sm lg:flex lg:flex-col">
-        <div class="border-b border-slate-200 px-5 py-5">
+    <aside class="app-sidebar fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-slate-200/80 bg-white/95 shadow-sm backdrop-blur lg:flex lg:flex-col">
+        <div class="app-sidebar-brand border-b border-slate-200/80 px-5 py-5">
             <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
                 @if($brandLogoUrl)
-                    <img src="{{ $brandLogoUrl }}" alt="{{ $brandName }} logo" class="h-10 w-10 rounded-lg border border-slate-200 bg-white object-contain p-1 shadow-sm">
+                    <img src="{{ $brandLogoUrl }}" alt="{{ $brandName }} logo" class="h-11 w-11 rounded-lg border border-slate-200 bg-white object-contain p-1 shadow-sm">
                 @else
-                    <span class="grid h-10 w-10 place-items-center rounded-lg bg-cyan-700 text-sm font-bold text-white shadow-sm">{{ $brandInitials }}</span>
+                    <span class="grid h-11 w-11 place-items-center rounded-lg bg-cyan-700 text-sm font-bold text-white shadow-sm">{{ $brandInitials }}</span>
                 @endif
                 <span class="min-w-0">
-                    <span class="block truncate text-base font-bold text-slate-950">{{ $brandName }}</span>
-                    <span class="block truncate text-xs font-medium text-slate-500">{{ $brandSubtitle }}</span>
+                    <span class="block truncate text-base font-black text-slate-950">{{ $brandName }}</span>
+                    <span class="block truncate text-xs font-semibold text-slate-500">{{ $brandSubtitle }}</span>
                 </span>
             </a>
-            <div class="mt-5 rounded-lg border border-cyan-100 bg-cyan-50 px-3 py-2">
-                <p class="text-xs font-semibold text-cyan-800">{{ $displayRoleName }}</p>
-                <p class="mt-0.5 truncate text-xs text-cyan-700">{{ $user?->email }}</p>
+            <div class="app-user-badge mt-5 rounded-lg border border-cyan-100 bg-cyan-50 px-3 py-2">
+                <p class="text-xs font-black uppercase text-cyan-800">{{ $displayRoleName }}</p>
+                <p class="mt-0.5 truncate text-xs font-semibold text-cyan-700">{{ $user?->email }}</p>
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto px-3 py-4">
+        <div class="app-sidebar-scroll flex-1 overflow-y-auto px-3 py-4">
             @foreach($navSections as $section => $items)
                 @continue(empty($items))
                 @php
@@ -222,7 +222,7 @@
                     @foreach($items as $item)
                         @php($active = request()->routeIs($item['active']))
                         <a href="{{ route($item['route']) }}"
-                           class="{{ $active ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }} group mb-2 flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition">
+                           class="{{ $active ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }} app-nav-link group mb-2 flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition">
                             <span class="{{ $active ? 'text-cyan-200' : 'text-slate-400 group-hover:text-cyan-700' }} grid h-5 w-5 place-items-center">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">{!! $navIcon($item['icon']) !!}</svg>
                             </span>
@@ -232,7 +232,7 @@
                     @continue
                 @endif
                 <details class="nav-dropdown mb-2 group" data-pinned-open="{{ $sectionPinnedOpen ? 'true' : 'false' }}" onmouseenter="this.open = true" onmouseleave="if (this.dataset.pinnedOpen !== 'true') this.open = false" @if($sectionPinnedOpen) open @endif>
-                    <summary class="{{ $sectionActive ? 'bg-cyan-50 text-cyan-900 ring-1 ring-cyan-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950' }} flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2 text-left text-xs font-black uppercase transition [&::-webkit-details-marker]:hidden">
+                    <summary class="{{ $sectionActive ? 'bg-cyan-50 text-cyan-900 ring-1 ring-cyan-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950' }} app-nav-section flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2 text-left text-xs font-black uppercase transition [&::-webkit-details-marker]:hidden">
                         <span class="{{ $sectionActive ? 'text-cyan-700' : 'text-slate-400' }} grid h-5 w-5 place-items-center">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">{!! $navIcon($sectionIcon) !!}</svg>
                         </span>
@@ -245,7 +245,7 @@
                         @foreach($items as $item)
                             @php($active = request()->routeIs($item['active']))
                             <a href="{{ route($item['route']) }}"
-                               class="{{ $active ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }} group flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition">
+                               class="{{ $active ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }} app-nav-link group flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition">
                                 <span class="{{ $active ? 'text-cyan-200' : 'text-slate-400 group-hover:text-cyan-700' }} grid h-5 w-5 place-items-center">
                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">{!! $navIcon($item['icon']) !!}</svg>
                                 </span>
@@ -257,8 +257,8 @@
             @endforeach
         </div>
 
-        <div class="border-t border-slate-200 p-3">
-            <div class="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
+        <div class="border-t border-slate-200/80 p-3">
+            <div class="app-account-card flex items-center gap-3 rounded-lg bg-slate-50 p-3">
                 <div class="grid h-9 w-9 place-items-center rounded-lg bg-white text-sm font-bold text-cyan-700 shadow-sm">
                     {{ strtoupper(substr($user?->name ?? 'U', 0, 1)) }}
                 </div>
@@ -268,7 +268,7 @@
                         <a href="{{ route('profile.edit') }}" class="text-xs font-semibold text-cyan-700 hover:text-cyan-800">Profile</a>
                     @endif
                 </div>
-                <form method="POST" action="{{ route('logout') }}">
+                <form method="POST" action="{{ route('logout') }}" onsubmit="sessionStorage.removeItem(@js('chatbot.session.'.($user?->user_id ?? 'guest')))">
                     @csrf
                     <button type="submit" class="rounded-lg px-2 py-1 text-xs font-bold text-slate-500 transition hover:bg-white hover:text-red-600">Exit</button>
                 </form>
@@ -276,7 +276,7 @@
         </div>
     </aside>
 
-    <details class="group sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur lg:hidden">
+    <details class="app-mobile-nav group sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 px-4 py-3 shadow-sm backdrop-blur lg:hidden">
         <summary class="flex cursor-pointer list-none items-center justify-between [&::-webkit-details-marker]:hidden">
             <span class="flex items-center gap-3">
                 @if($brandLogoUrl)
@@ -335,7 +335,7 @@
                 @if(hasPermission('profile.view'))
                     <a href="{{ route('profile.edit') }}" class="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100">Profile</a>
                 @endif
-                <form method="POST" action="{{ route('logout') }}">
+                <form method="POST" action="{{ route('logout') }}" onsubmit="sessionStorage.removeItem(@js('chatbot.session.'.($user?->user_id ?? 'guest')))">
                     @csrf
                     <button type="submit" class="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50">Log Out</button>
                 </form>

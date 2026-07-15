@@ -3,11 +3,19 @@
 namespace App\Http\Requests\Student;
 
 use App\Models\Student;
+use App\Support\ValidationRules;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateStudentRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'student_type' => $this->input('student_type') ?: 'Regular',
+        ]);
+    }
+
     public function authorize(): bool
     {
         return true; // Controller enforces permission checks.
@@ -32,18 +40,19 @@ class UpdateStudentRequest extends FormRequest
                 Rule::unique('users', 'username')->ignore($userId, 'user_id'),
             ],
 
-            'first_name' => ['required', 'string', 'max:80'],
-            'last_name' => ['required', 'string', 'max:80'],
+            'first_name' => ValidationRules::shortText(true, 80),
+            'last_name' => ValidationRules::shortText(true, 80),
             'gender' => ['nullable', 'in:Male,Female,Other'],
             'dob' => ['nullable', 'date'],
 
-            'phone' => ['nullable', 'string', 'max:20', 'unique:students,phone,' . $studentId . ',student_id'],
-            'email' => ['nullable', 'email', 'max:150', 'unique:students,email,' . $studentId . ',student_id'],
+            'phone' => [...ValidationRules::phone(), 'unique:students,phone,' . $studentId . ',student_id'],
+            'email' => [...ValidationRules::email(false, 150), 'unique:students,email,' . $studentId . ',student_id'],
 
             'address' => ['nullable', 'string'],
-            'guardian_name' => ['nullable', 'string', 'max:150'],
-            'guardian_phone' => ['nullable', 'string', 'max:20'],
+            'guardian_name' => ValidationRules::shortText(false, 150),
+            'guardian_phone' => ValidationRules::phone(),
             'admission_date' => ['nullable', 'date'],
+            'student_type' => ['required', 'in:Regular,D2D,C2D'],
             'admission_type' => ['nullable', 'in:Direct,ACPC,Management'],
 
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],

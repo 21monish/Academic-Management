@@ -25,7 +25,6 @@ class UpdateSubjectRequest extends FormRequest
                 'unique:subjects,code,' . ($subject?->subject_id ?? $subject?->id),
             ],
             'name' => ['required', 'string', 'max:200'],
-            'short_name' => ['required', 'string', 'max:50'],
             'type' => ['required', 'in:Theory,Lab,Tutorial'],
             'category' => ['required', 'in:Core,Elective,Open Elective,Audit'],
             'credits' => ['nullable', 'integer', 'min:0'],
@@ -33,6 +32,8 @@ class UpdateSubjectRequest extends FormRequest
             'practical_hours' => ['nullable', 'integer', 'min:0'],
             'tutorial_hours' => ['nullable', 'integer', 'min:0'],
             'department_id' => ['required', 'exists:departments,dept_id'],
+            'programme_id' => ['required', 'exists:programmes,programme_id'],
+            'semester_id' => ['required', 'exists:semesters,semester_id'],
         ];
     }
 
@@ -40,7 +41,6 @@ class UpdateSubjectRequest extends FormRequest
     {
         $this->merge([
             'code' => Str::upper((string) $this->input('code')),
-            'short_name' => trim((string) $this->input('short_name')),
             'name' => trim((string) $this->input('name')),
         ]);
     }

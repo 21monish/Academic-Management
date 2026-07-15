@@ -189,8 +189,18 @@ class RolePermissionSeeder extends Seeder
                 'profile' => ['view', 'update'],
                 'password_change' => ['view', 'update'],
                 'chatbot' => ['ask'],
+                'attendance_summary' => ['view'],
+                'result' => ['view'],
+                'hall_ticket' => ['view'],
+                'receipt' => ['view'],
+                'leave_application' => ['view', 'create', 'update', 'delete'],
                 'notice' => ['view'],
                 'notice_acknowledgement' => ['view', 'create'],
+                'attendance_report' => ['view'],
+                'result_card' => ['view'],
+                'fee_receipt_report' => ['view'],
+                'hall_ticket_report' => ['view'],
+                'reports' => ['view'],
             ],
         ];
 

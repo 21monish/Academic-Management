@@ -2,8 +2,8 @@
     <x-slot name="header">
         <div class="flex items-center justify-between gap-4">
             <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">Roles & Permissions</h2>
-                <p class="mt-1 text-sm text-gray-500">Manage role labels and role default permissions. Final access is assigned directly on user accounts.</p>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">Roles</h2>
+                <p class="mt-1 text-sm text-gray-500">Manage system and custom roles.</p>
             </div>
             @if(hasPermission('role.create'))
                 <a href="{{ route('roles.create') }}" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">+ Add Role</a>
@@ -13,13 +13,6 @@
 
     <div class="py-6">
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            @if (session('status'))
-                <div class="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-700">{{ session('status') }}</div>
-            @endif
-            @if ($errors->any())
-                <div class="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{{ $errors->first() }}</div>
-            @endif
-
             <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                 <table class="min-w-full divide-y divide-slate-200 text-sm">
                     <thead class="bg-slate-50">
@@ -51,16 +44,28 @@
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 text-right">
-                                    @if(hasPermission('role.update'))
-                                        <a href="{{ route('roles.edit', $role) }}" class="font-semibold text-indigo-600">Edit</a>
-                                    @endif
-                                    @if(hasPermission('role.delete') && ! $role->is_system_role && ! $role->users_count)
-                                        <form action="{{ route('roles.destroy', $role) }}" method="POST" class="ml-3 inline" onsubmit="return confirm('Delete this role?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="font-semibold text-red-600">Delete</button>
-                                        </form>
-                                    @endif
+                                    <div class="flex items-center justify-end gap-3">
+                                        @if(hasPermission('role.update'))
+                                            <a href="{{ route('roles.edit', $role) }}" class="font-semibold text-indigo-600">Edit</a>
+                                        @endif
+
+                                        @if(hasPermission('role.delete'))
+                                            @if(! $role->is_system_role && ! $role->users_count)
+                                                <form action="{{ route('roles.destroy', $role) }}" method="POST" class="inline" onsubmit="return confirm('Delete this role?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button class="font-semibold text-red-600">Delete</button>
+                                                </form>
+                                            @else
+                                                <span
+                                                    class="cursor-not-allowed font-semibold text-slate-400"
+                                                    title="{{ $role->is_system_role ? 'System roles cannot be deleted.' : 'Remove users from this role before deleting it.' }}"
+                                                >
+                                                    Delete
+                                                </span>
+                                            @endif
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty

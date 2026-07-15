@@ -9,8 +9,7 @@ Route::middleware(['auth', 'permission:staff.view'])->prefix('staff')->name('sta
     Route::post('/', [StaffController::class, 'store'])->middleware('permission:staff.create')->name('store');
 
     Route::get('/{staff}/edit', [StaffController::class, 'edit'])->middleware('permission:staff.update')->name('edit');
-    Route::put('/{staff}', [StaffController::class, 'update'])->middleware('permission:staff.update')->name('update');
-    Route::patch('/{staff}', [StaffController::class, 'update'])->middleware('permission:staff.update')->name('update');
+    Route::match(['put', 'patch'], '/{staff}', [StaffController::class, 'update'])->middleware('permission:staff.update')->name('update');
 
     Route::delete('/{staff}', [StaffController::class, 'destroy'])->middleware('permission:staff.delete')->name('destroy');
 });

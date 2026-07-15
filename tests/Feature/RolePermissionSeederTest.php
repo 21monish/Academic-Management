@@ -24,6 +24,14 @@ test('default roles receive expected permissions', function () {
     expect($admin->permissions()->where('module_name', 'user_permission')->where('action', 'update')->exists())->toBeTrue();
     expect($admin->permissions()->where('module_name', 'system_health')->where('action', 'view')->exists())->toBeTrue();
     expect($student->permissions()->where('module_name', 'notice')->where('action', 'view')->exists())->toBeTrue();
+    expect($student->permissions()->where('module_name', 'attendance_summary')->where('action', 'view')->exists())->toBeTrue();
+    expect($student->permissions()->where('module_name', 'result')->where('action', 'view')->exists())->toBeTrue();
+    expect($student->permissions()->where('module_name', 'hall_ticket')->where('action', 'view')->exists())->toBeTrue();
+    expect($student->permissions()->where('module_name', 'leave_application')->where('action', 'create')->exists())->toBeTrue();
+    expect($student->permissions()->where('module_name', 'result_card')->where('action', 'view')->exists())->toBeTrue();
+    expect($student->permissions()->where('module_name', 'fee_receipt_report')->where('action', 'view')->exists())->toBeTrue();
+    expect($student->permissions()->where('module_name', 'hall_ticket_report')->where('action', 'view')->exists())->toBeTrue();
+    expect($student->permissions()->where('module_name', 'student')->where('action', 'view')->exists())->toBeFalse();
     expect(UserRole::where('role_name', 'Demo Role')->exists())->toBeFalse();
 });
 

@@ -26,7 +26,7 @@
             'colleges' => ['section' => 'Institution', 'label' => 'Colleges', 'index' => 'colleges.index'],
             'departments' => ['section' => 'Institution', 'label' => 'Departments', 'index' => 'departments.index'],
             'users' => ['section' => 'Institution', 'label' => 'Users', 'index' => 'users.index'],
-            'roles' => ['section' => 'Institution', 'label' => 'Roles & Permissions', 'index' => 'roles.index'],
+            'roles' => ['section' => 'Institution', 'label' => 'Roles', 'index' => 'roles.index'],
             'staff' => ['section' => 'People', 'label' => 'Staff', 'index' => 'staff.index'],
             'students' => ['section' => 'People', 'label' => 'Students', 'index' => 'students.index'],
             'academic.categories' => ['section' => 'People', 'label' => 'People Categories', 'index' => 'academic.categories.index'],
@@ -143,20 +143,103 @@
         @include('layouts.partials.vite')
     </head>
     <body class="app-shell theme-{{ $universityTheme }} font-sans antialiased text-slate-900">
-        <div class="min-h-screen bg-slate-100">
+        <div class="min-h-screen bg-transparent">
             @include('layouts.navigation')
+            @include('partials._toast')
 
             <!-- Page Heading -->
             @isset($header)
-                <header class="border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur lg:pl-72">
-                    <div class="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+                <header class="app-topbar border-b border-slate-200/80 bg-white/90 shadow-sm backdrop-blur lg:pl-72">
+                    <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
                 </header>
             @endisset
 
             <!-- Page Content -->
-            <main class="page-enter lg:pl-72">
+            <main class="app-main page-enter lg:pl-72">
+                <div id="page-skeleton-loader" class="page-skeleton-loader" aria-hidden="true">
+                    <div class="page-skeleton-inner mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                        <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+                            <div class="min-w-0 flex-1">
+                                <div class="skeleton-line h-4 w-56 max-w-full"></div>
+                                <div class="mt-4 skeleton-line h-7 w-72 max-w-full"></div>
+                            </div>
+                            <div class="flex gap-3">
+                                <div class="skeleton-line h-10 w-28"></div>
+                                <div class="skeleton-line h-10 w-32"></div>
+                            </div>
+                        </div>
+
+                        <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+                            <div class="space-y-5">
+                                <div class="skeleton-card">
+                                    <div class="grid gap-3 md:grid-cols-4">
+                                        @for($skeletonFilter = 0; $skeletonFilter < 4; $skeletonFilter++)
+                                            <div class="skeleton-line h-11 w-full"></div>
+                                        @endfor
+                                    </div>
+                                </div>
+
+                                <div class="skeleton-card p-0">
+                                    <div class="flex items-center justify-between gap-4 border-b border-slate-100 p-4">
+                                        <div class="skeleton-line h-5 w-40"></div>
+                                        <div class="skeleton-line h-9 w-28"></div>
+                                    </div>
+                                    <div class="overflow-hidden">
+                                        <div class="grid grid-cols-[64px_1.4fr_1fr_1fr_90px] gap-4 border-b border-slate-100 bg-slate-50 px-4 py-3">
+                                            @for($skeletonHead = 0; $skeletonHead < 5; $skeletonHead++)
+                                                <div class="skeleton-line h-4 w-full"></div>
+                                            @endfor
+                                        </div>
+                                        @for($skeletonRow = 0; $skeletonRow < 7; $skeletonRow++)
+                                            <div class="grid grid-cols-[64px_1.4fr_1fr_1fr_90px] gap-4 border-b border-slate-100 px-4 py-4 last:border-b-0">
+                                                <div class="skeleton-line h-4 w-8"></div>
+                                                <div>
+                                                    <div class="skeleton-line h-4 w-40 max-w-full"></div>
+                                                    <div class="mt-2 skeleton-line h-3 w-24 max-w-full"></div>
+                                                </div>
+                                                <div class="skeleton-line h-4 w-full"></div>
+                                                <div class="skeleton-line h-4 w-4/5"></div>
+                                                <div class="skeleton-line h-6 w-20"></div>
+                                            </div>
+                                        @endfor
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-5">
+                                <div class="skeleton-card">
+                                    <div class="skeleton-line h-5 w-32"></div>
+                                    <div class="mt-5 grid grid-cols-2 gap-3">
+                                        @for($skeletonStat = 0; $skeletonStat < 4; $skeletonStat++)
+                                            <div class="rounded-lg border border-slate-100 p-3">
+                                                <div class="skeleton-line h-3 w-16"></div>
+                                                <div class="mt-3 skeleton-line h-7 w-12"></div>
+                                            </div>
+                                        @endfor
+                                    </div>
+                                </div>
+
+                                <div class="skeleton-card">
+                                    <div class="skeleton-line h-5 w-36"></div>
+                                    <div class="mt-4 space-y-4">
+                                        @for($skeletonItem = 0; $skeletonItem < 5; $skeletonItem++)
+                                            <div class="flex items-center gap-3">
+                                                <div class="skeleton-dot"></div>
+                                                <div class="min-w-0 flex-1">
+                                                    <div class="skeleton-line h-4 w-full"></div>
+                                                    <div class="mt-2 skeleton-line h-3 w-2/3"></div>
+                                                </div>
+                                            </div>
+                                        @endfor
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 @auth
                     @if(count($breadcrumbItems))
                         <div class="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
@@ -168,7 +251,7 @@
                 {{ $slot }}
             </main>
 
-            <footer class="border-t border-slate-200 bg-white/90 py-4 text-center text-xs font-semibold text-slate-500 lg:pl-72">
+            <footer class="app-footer border-t border-slate-200/80 bg-white/85 py-4 text-center text-xs font-semibold text-slate-500 lg:pl-72">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     {{ $footerCredit }}
                 </div>

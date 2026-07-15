@@ -20,17 +20,6 @@
             @method('PUT')
         @endif
 
-        @if ($errors->any())
-            <div class="mb-5 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-                <p class="font-semibold">Please fix the highlighted fields and try again.</p>
-                <ul class="mt-2 list-disc space-y-1 pl-5">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
         {{-- Personal Information --}}
         <div class="text-gray-800 font-semibold">Personal Information</div>
         <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -105,7 +94,7 @@
 
             <div>
                 <x-input-label for="phone" value="Mobile" />
-                <x-text-input id="phone" name="phone" class="block mt-1 w-full" :value="old('phone', $student?->phone)" />
+                <x-text-input id="phone" name="phone" class="block mt-1 w-full" :value="old('phone', $student?->phone)" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="10 digit mobile number" />
                 <x-input-error :messages="$errors->get('phone')" class="mt-2" />
             </div>
         </div>
@@ -127,7 +116,7 @@
 
             <div>
                 <x-input-label for="guardian_phone" value="Guardian Mobile" />
-                <x-text-input id="guardian_phone" name="guardian_phone" class="block mt-1 w-full" :value="old('guardian_phone', $student?->guardian_phone)" />
+                <x-text-input id="guardian_phone" name="guardian_phone" class="block mt-1 w-full" :value="old('guardian_phone', $student?->guardian_phone)" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="10 digit guardian mobile" />
                 <x-input-error :messages="$errors->get('guardian_phone')" class="mt-2" />
             </div>
         </div>
@@ -137,8 +126,11 @@
         <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <x-input-label for="enrollment_no" value="Enrollment No" />
-                <x-text-input id="enrollment_no" name="enrollment_no" class="block mt-1 w-full" :value="old('enrollment_no', $student?->enrollment_no)" required />
+                <x-text-input id="enrollment_no" name="enrollment_no" class="block mt-1 w-full" :value="old('enrollment_no', $student?->enrollment_no)" :readonly="! $isEdit" placeholder="Auto generated on create" />
                 <x-input-error :messages="$errors->get('enrollment_no')" class="mt-2" />
+                @unless($isEdit)
+                    <p class="mt-1 text-xs text-gray-500">Format: year + college code + department code + programme code + serial, e.g. 241043107001.</p>
+                @endunless
             </div>
 
             <div>
@@ -150,6 +142,17 @@
 
         <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
+                <x-input-label for="student_type" value="Student Type" />
+                <select id="student_type" name="student_type" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm" required>
+                    @foreach(['Regular','D2D','C2D'] as $type)
+                        <option value="{{ $type }}" @selected(old('student_type', $student?->student_type ?? 'Regular') === $type)>{{ $type }}</option>
+                    @endforeach
+                </select>
+                <x-input-error :messages="$errors->get('student_type')" class="mt-2" />
+                <p class="mt-1 text-xs text-gray-500">D2D and C2D students are lateral entry and start from Semester 3 or higher.</p>
+            </div>
+
+            <div>
                 <x-input-label for="admission_type" value="Admission Type" />
                 <select id="admission_type" name="admission_type" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm">
                     <option value="">Select Admission Type (optional)</option>
@@ -159,7 +162,9 @@
                 </select>
                 <x-input-error :messages="$errors->get('admission_type')" class="mt-2" />
             </div>
+        </div>
 
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <x-input-label for="college_id" value="College" />
                 <select id="college_id" name="college_id" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm" required>

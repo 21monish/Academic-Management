@@ -1,7 +1,6 @@
 <x-app-layout>
     <x-slot name="header"><h2 class="text-xl font-semibold text-slate-900">Practical Marks</h2></x-slot>
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        @include('partials._flash')
         <form method="POST" action="{{ route('exams.logistics.practical-marks.store') }}" class="mb-6 grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-4">
             @csrf
             <select name="batch_id" class="rounded-md border-gray-300" required><option value="">Batch</option>@foreach($practicalBatchesList as $batch)<option value="{{ $batch->batch_id }}">{{ $batch->batch_name ?? 'Batch '.$batch->batch_no }} / {{ $batch->schedule?->subject?->code }}</option>@endforeach</select>

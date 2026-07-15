@@ -43,11 +43,11 @@ class SubjectController extends Controller
     {
         $this->authorize('subject.create');
 
-        $this->subjectService->store($request->validated());
+        $subject = $this->subjectService->store($request->validated());
 
         return redirect()
             ->route('academic.subjects.index')
-            ->with('status', 'Subject created.');
+            ->with('status', 'Subject '.$subject->name.' created successfully.');
     }
 
     public function show(Subject $subject): View
@@ -77,18 +77,20 @@ class SubjectController extends Controller
 
         return redirect()
             ->route('academic.subjects.show', $subject)
-            ->with('status', 'Subject updated.');
+            ->with('status', 'Subject '.$subject->name.' updated successfully.');
     }
 
     public function destroy(Subject $subject): RedirectResponse
     {
         $this->authorize('subject.delete');
 
+        $subjectName = $subject->name;
+
         $this->subjectService->delete($subject);
 
         return redirect()
             ->route('academic.subjects.index')
-            ->with('status', 'Subject deleted.');
+            ->with('status', 'Subject '.$subjectName.' deleted successfully.');
     }
 
     public function activate(Subject $subject): RedirectResponse
@@ -97,7 +99,7 @@ class SubjectController extends Controller
 
         $this->subjectService->setActive($subject, true);
 
-        return redirect()->route('academic.subjects.index')->with('status', 'Subject activated.');
+        return redirect()->route('academic.subjects.index')->with('status', 'Subject '.$subject->name.' activated successfully.');
     }
 
     public function deactivate(Subject $subject): RedirectResponse
@@ -106,7 +108,7 @@ class SubjectController extends Controller
 
         $this->subjectService->setActive($subject, false);
 
-        return redirect()->route('academic.subjects.index')->with('status', 'Subject deactivated.');
+        return redirect()->route('academic.subjects.index')->with('status', 'Subject '.$subject->name.' deactivated successfully.');
     }
 }
 

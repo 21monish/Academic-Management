@@ -21,9 +21,9 @@
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700,800" rel="stylesheet" />
     @include('layouts.partials.vite')
 </head>
-<body class="bg-slate-50 text-slate-950 antialiased">
+<body class="public-shell bg-slate-50 text-slate-950 antialiased">
     <div class="min-h-screen">
-        <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <header class="public-header sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur">
             <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-10">
                 <a href="{{ url('/') }}" class="flex min-w-0 items-center gap-3">
                     @if($publicBranding['logo_url'])
@@ -58,7 +58,7 @@
             @yield('content')
         </main>
 
-        <footer class="border-t border-slate-200 bg-white">
+        <footer class="public-footer border-t border-slate-200/80 bg-white">
             <div class="mx-auto grid max-w-7xl gap-6 px-5 py-8 sm:px-8 md:grid-cols-[1fr_auto] lg:px-10">
                 <div>
                     <p class="text-sm font-black text-slate-950">{{ $publicBranding['application_name'] }}</p>

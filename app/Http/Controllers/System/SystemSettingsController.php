@@ -5,6 +5,7 @@ namespace App\Http\Controllers\System;
 use App\Http\Controllers\Controller;
 use App\Services\SystemSettingService;
 use App\Services\UploadService;
+use App\Support\ValidationRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -47,10 +48,10 @@ class SystemSettingsController extends Controller
             'application_name' => ['required', 'string', 'max:120'],
             'application_short_name' => ['required', 'string', 'max:80'],
             'created_by' => ['required', 'string', 'max:150'],
-            'created_by_contact' => ['nullable', 'string', 'max:80'],
+            'created_by_contact' => ValidationRules::phone(),
             'footer_text' => ['nullable', 'string', 'max:255'],
-            'support_email' => ['nullable', 'email', 'max:150'],
-            'support_phone' => ['nullable', 'string', 'max:40'],
+            'support_email' => ValidationRules::email(false, 150),
+            'support_phone' => ValidationRules::phone(),
             'logo_url' => ['nullable', 'string', 'max:300'],
             'logo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,svg', 'max:2048'],
         ]);

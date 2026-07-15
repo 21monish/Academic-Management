@@ -24,11 +24,13 @@
             'How do I mark attendance?',
             'Popular questions'
         ],
-        messages: [
-            { from: 'bot', text: @js('Hi, I am your '.$chatbotBrandName.' assistant. Ask me anything you have taught me.'), matched: null }
-        ],
+        initialMessage: { from: 'bot', text: @js('Hi, I am your '.$chatbotBrandName.' assistant. Ask me anything you have taught me.'), matched: null },
+        messages: [],
+        storageKey: @js('chatbot.session.'.($chatbotUser?->user_id ?? 'guest')),
         csrf: document.querySelector('meta[name=csrf-token]').getAttribute('content'),
         init() {
+            this.loadChat();
+
             this.$watch('open', value => {
                 if (value) {
                     this.$nextTick(() => {
@@ -37,6 +39,45 @@
                     });
                 }
             });
+            this.$watch('teaching', () => this.saveChat());
+            this.$watch('teachAnswer', () => this.saveChat());
+
+            document.addEventListener('submit', event => {
+                const form = event.target;
+                if (form instanceof HTMLFormElement && form.action.includes('/logout')) {
+                    sessionStorage.removeItem(this.storageKey);
+                }
+            });
+        },
+        loadChat() {
+            try {
+                const saved = JSON.parse(sessionStorage.getItem(this.storageKey) || '{}');
+
+                if (Array.isArray(saved.messages) && saved.messages.length) {
+                    this.messages = saved.messages;
+                    this.lastQuestion = saved.lastQuestion || '';
+                    this.teaching = Boolean(saved.teaching);
+                    this.teachAnswer = saved.teachAnswer || '';
+                    return;
+                }
+            } catch (error) {
+                sessionStorage.removeItem(this.storageKey);
+            }
+
+            this.messages = [this.initialMessage];
+            this.saveChat();
+        },
+        saveChat() {
+            try {
+                sessionStorage.setItem(this.storageKey, JSON.stringify({
+                    messages: this.messages.slice(-40),
+                    lastQuestion: this.lastQuestion,
+                    teaching: this.teaching,
+                    teachAnswer: this.teachAnswer
+                }));
+            } catch (error) {
+                // Browser storage can be unavailable in strict privacy modes.
+            }
         },
         async readJson(response, fallbackMessage) {
             const contentType = response.headers.get('content-type') || '';
@@ -75,6 +116,7 @@
             this.teachAnswer = '';
             this.teaching = false;
             this.loading = true;
+            this.saveChat();
             this.$nextTick(() => this.scrollToBottom());
 
             try {
@@ -96,8 +138,10 @@
                     matched: data.matched_question || null
                 });
                 this.teaching = !data.learned && @js(hasPermission('chatbot.teach'));
+                this.saveChat();
             } catch (error) {
                 this.messages.push({ from: 'bot', text: error.message, matched: null });
+                this.saveChat();
             } finally {
                 this.loading = false;
                 this.$nextTick(() => {
@@ -126,8 +170,10 @@
                 this.messages.push({ from: 'bot', text: data.message, matched: null });
                 this.teachAnswer = '';
                 this.teaching = false;
+                this.saveChat();
             } catch (error) {
                 this.messages.push({ from: 'bot', text: error.message, matched: null });
+                this.saveChat();
             } finally {
                 this.loading = false;
                 this.$nextTick(() => this.scrollToBottom());
@@ -143,11 +189,12 @@
             this.ask();
         },
         resetChat() {
-            this.messages = [{ from: 'bot', text: @js('Hi, I am your '.$chatbotBrandName.' assistant. Ask me anything you have taught me.'), matched: null }];
+            this.messages = [this.initialMessage];
             this.question = '';
             this.teachAnswer = '';
             this.lastQuestion = '';
             this.teaching = false;
+            this.saveChat();
             this.$nextTick(() => this.$refs.questionInput?.focus());
         }
     }"

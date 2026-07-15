@@ -7,12 +7,6 @@
     </x-slot>
 
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        @if (session('status'))
-            <div class="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
-                {{ session('status') }}
-            </div>
-        @endif
-
         <form method="POST" action="{{ route('system.settings.update') }}" enctype="multipart/form-data" class="mb-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             @csrf
             @method('PUT')
@@ -44,7 +38,7 @@
 
                     <div>
                         <x-input-label for="created_by_contact" value="Creator Contact" />
-                        <input id="created_by_contact" name="created_by_contact" type="text" class="mt-1 block w-full rounded-md border-2 border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm focus:border-cyan-600 focus:ring-cyan-600 disabled:bg-slate-100 disabled:text-slate-500" value="{{ old('created_by_contact', $settings['created_by_contact']) }}" placeholder="Phone or contact detail" @disabled(! $canUpdate)>
+                        <input id="created_by_contact" name="created_by_contact" type="text" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" class="mt-1 block w-full rounded-md border-2 border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm focus:border-cyan-600 focus:ring-cyan-600 disabled:bg-slate-100 disabled:text-slate-500" value="{{ old('created_by_contact', $settings['created_by_contact']) }}" placeholder="10 digit phone number" @disabled(! $canUpdate)>
                         <x-input-error :messages="$errors->get('created_by_contact')" class="mt-2" />
                     </div>
 
@@ -56,7 +50,7 @@
 
                     <div>
                         <x-input-label for="support_phone" value="Support Phone" />
-                        <input id="support_phone" name="support_phone" type="text" class="mt-1 block w-full rounded-md border-2 border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm focus:border-cyan-600 focus:ring-cyan-600 disabled:bg-slate-100 disabled:text-slate-500" value="{{ old('support_phone', $settings['support_phone']) }}" placeholder="Support phone number" @disabled(! $canUpdate)>
+                        <input id="support_phone" name="support_phone" type="text" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" class="mt-1 block w-full rounded-md border-2 border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm focus:border-cyan-600 focus:ring-cyan-600 disabled:bg-slate-100 disabled:text-slate-500" value="{{ old('support_phone', $settings['support_phone']) }}" placeholder="10 digit support phone number" @disabled(! $canUpdate)>
                         <x-input-error :messages="$errors->get('support_phone')" class="mt-2" />
                     </div>
 

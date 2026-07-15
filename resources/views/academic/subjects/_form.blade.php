@@ -13,12 +13,8 @@
     $subject = $subject ?? null;
 
     $departmentId = old('department_id', $subject?->dept_id);
-    $programmeId = old('programme_id', $subject?->programme_id);
-    $semesterId = old('semester_id', $subject?->semester_id);
-
-    // Note: subjects table in this ERP doesn't include programme_id/semester_id,
-    // but the UI requirements include them. We will collect them and submit,
-    // even if the subject model doesn't persist them directly.
+    $programmeId = old('programme_id', $selectedProgrammeId ?? $subject?->curriculum?->first()?->programme_id);
+    $semesterId = old('semester_id', $selectedSemesterId ?? $subject?->curriculum?->first()?->semester_id);
 @endphp
 
 <form method="POST" action="{{ isset($actionRoute) ? $actionRoute : '' }}" id="subject-form" class="space-y-6">
@@ -38,18 +34,10 @@
                 @enderror
             </div>
 
-            <div class="md:col-span-5">
+            <div class="md:col-span-9">
                 <x-input-label for="name" value="Subject Name" />
                 <x-text-input id="name" name="name" class="block mt-1 w-full" :value="old('name', $subject?->name)" required />
                 @error('name')
-                    <div class="text-sm text-red-600 mt-1">{{ $message }}</div>
-                @enderror
-            </div>
-
-            <div class="md:col-span-4">
-                <x-input-label for="short_name" value="Short Name" />
-                <x-text-input id="short_name" name="short_name" class="block mt-1 w-full" :value="old('short_name', $subject?->short_name)" required />
-                @error('short_name')
                     <div class="text-sm text-red-600 mt-1">{{ $message }}</div>
                 @enderror
             </div>

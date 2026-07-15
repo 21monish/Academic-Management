@@ -10,7 +10,6 @@
     </x-slot>
 
     <div class="py-8 max-w-6xl mx-auto sm:px-6 lg:px-8">
-        @include('partials._flash')
 
         <div class="bg-white shadow-sm rounded-lg border border-gray-100 mb-6 p-4">
             <form method="GET" action="{{ route('academic.programmes.index') }}" class="grid grid-cols-1 md:grid-cols-12 gap-3">

@@ -7,7 +7,6 @@
     </x-slot>
 
     <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        @include('partials._flash')
 
         <form method="GET" class="mb-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <x-input-label for="q" value="Search" />

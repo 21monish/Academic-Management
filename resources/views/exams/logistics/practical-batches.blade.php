@@ -1,7 +1,6 @@
 <x-app-layout>
     <x-slot name="header"><h2 class="text-xl font-semibold text-slate-900">Practical Batches</h2></x-slot>
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        @include('partials._flash')
         <form method="POST" action="{{ route('exams.logistics.practical-batches.store') }}" class="mb-6 grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-4">
             @csrf
             <select name="prac_schedule_id" class="rounded-md border-gray-300 md:col-span-2" required><option value="">Practical schedule</option>@foreach($practicalSchedulesList as $schedule)<option value="{{ $schedule->prac_schedule_id }}">{{ $schedule->exam?->exam_name }} / {{ $schedule->subject?->code }}</option>@endforeach</select>

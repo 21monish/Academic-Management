@@ -156,6 +156,35 @@
             'teal' => 'border-teal-200 bg-teal-50 text-teal-900 hover:bg-teal-100',
             'slate' => 'border-slate-200 bg-slate-50 text-slate-900 hover:bg-slate-100',
         ];
+
+        $visibleSections = collect($pageSections)
+            ->map(function ($items) use ($canSeePermission) {
+                return collect($items)
+                    ->filter(fn ($item) => ! empty($item['route']) && Route::has($item['route']) && $canSeePermission($item['permission'] ?? null))
+                    ->values();
+            })
+            ->filter(fn ($items) => $items->isNotEmpty());
+
+        $visibleModuleCount = $visibleSections->count();
+        $visiblePageCount = $visibleSections->sum(fn ($items) => $items->count());
+        $operationsReadiness = $analyticsCards->isNotEmpty()
+            ? round((float) $analyticsCards->avg(fn ($card) => (float) ($card['value'] ?? 0)), 1)
+            : null;
+
+        $attentionItems = collect($analyticsCards)
+            ->filter(fn ($card) => (float) ($card['value'] ?? 0) < 75)
+            ->map(fn ($card) => [
+                'label' => $card['label'] ?? 'Metric',
+                'value' => number_format((float) ($card['value'] ?? 0), 1).'%',
+                'detail' => $card['detail'] ?? 'Needs review',
+            ])
+            ->values();
+
+        if ($attentionItems->isEmpty() && ($roleName ?? null) !== 'Student') {
+            $attentionItems = collect([
+                ['label' => 'Operations', 'value' => 'OK', 'detail' => 'No low KPI areas detected in visible modules.'],
+            ]);
+        }
     @endphp
 
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -435,7 +464,7 @@
             </section>
         @else
         <section class="grid gap-4 lg:grid-cols-[1fr_360px]">
-            <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md">
+            <div class="dashboard-hero rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md">
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <p class="text-xs font-bold uppercase tracking-wide text-cyan-700">Campus Snapshot</p>
@@ -447,6 +476,16 @@
                         </p>
                     </div>
 
+                    <div class="grid gap-2 text-right sm:min-w-44">
+                        <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                            <p class="text-xs font-bold uppercase text-slate-400">Workspace</p>
+                            <p class="mt-1 text-sm font-black text-slate-900">{{ now()->format('d M Y') }}</p>
+                        </div>
+                        <div class="rounded-lg border border-cyan-100 bg-cyan-50 px-3 py-2">
+                            <p class="text-xs font-bold uppercase text-cyan-700">Access Surface</p>
+                            <p class="mt-1 text-sm font-black text-cyan-950">{{ $visiblePageCount }} pages</p>
+                        </div>
+                    </div>
                 </div>
 
                 @if($summaryCards->isNotEmpty())
@@ -490,6 +529,112 @@
                 @endif
             </div>
         </section>
+
+        <section class="dashboard-command mt-6 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+            <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-black uppercase text-cyan-700">Command Center</p>
+                        <h3 class="mt-1 text-lg font-black text-slate-950">Operational Readiness</h3>
+                        <p class="mt-1 text-sm font-semibold text-slate-500">A quick read on the modules and KPIs available to this login.</p>
+                    </div>
+                    <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-right">
+                        <p class="text-xs font-bold uppercase text-slate-400">Visible Modules</p>
+                        <p class="mt-1 text-lg font-black text-slate-950">{{ $visibleModuleCount }}</p>
+                    </div>
+                </div>
+
+                <div class="mt-5 grid gap-4 md:grid-cols-[180px_1fr]">
+                    <div class="grid place-items-center rounded-lg bg-slate-50 p-4">
+                        @php
+                            $readiness = $operationsReadiness !== null ? max(0, min(100, $operationsReadiness)) : 0;
+                            $readinessDegrees = round($readiness * 3.6, 2);
+                        @endphp
+                        <div class="grid h-32 w-32 place-items-center rounded-full shadow-inner"
+                             style="background: conic-gradient(var(--theme-primary) 0deg {{ $readinessDegrees }}deg, #e2e8f0 {{ $readinessDegrees }}deg 360deg);">
+                            <div class="grid h-20 w-20 place-items-center rounded-full bg-white text-center shadow-sm">
+                                <span>
+                                    <span class="block text-xl font-black text-slate-950">{{ $operationsReadiness !== null ? number_format($readiness, 0).'%' : '-' }}</span>
+                                    <span class="block text-[10px] font-black uppercase text-slate-400">Ready</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid gap-3 sm:grid-cols-3">
+                        <div class="rounded-lg border border-slate-200 p-4">
+                            <p class="text-xs font-bold uppercase text-slate-400">Pages</p>
+                            <p class="mt-2 text-2xl font-black text-slate-950">{{ $visiblePageCount }}</p>
+                            <p class="mt-1 text-xs font-semibold text-slate-500">Permission-visible routes</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-200 p-4">
+                            <p class="text-xs font-bold uppercase text-slate-400">Shortcuts</p>
+                            <p class="mt-2 text-2xl font-black text-slate-950">{{ $quickLinks->count() }}</p>
+                            <p class="mt-1 text-xs font-semibold text-slate-500">Role quick actions</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-200 p-4">
+                            <p class="text-xs font-bold uppercase text-slate-400">Alerts</p>
+                            <p class="mt-2 text-2xl font-black {{ $attentionItems->first()['value'] === 'OK' ? 'text-emerald-700' : 'text-amber-700' }}">{{ $attentionItems->first()['value'] === 'OK' ? 0 : $attentionItems->count() }}</p>
+                            <p class="mt-1 text-xs font-semibold text-slate-500">KPI areas to review</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-black uppercase text-cyan-700">Needs Attention</p>
+                        <h3 class="mt-1 text-lg font-black text-slate-950">Priority Watchlist</h3>
+                    </div>
+                    <span class="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">{{ $attentionItems->count() }}</span>
+                </div>
+
+                <div class="mt-4 space-y-3">
+                    @foreach($attentionItems->take(4) as $item)
+                        <div class="rounded-lg border {{ $item['value'] === 'OK' ? 'border-emerald-100 bg-emerald-50' : 'border-amber-100 bg-amber-50' }} p-3">
+                            <div class="flex items-start justify-between gap-3">
+                                <p class="text-sm font-black {{ $item['value'] === 'OK' ? 'text-emerald-900' : 'text-amber-950' }}">{{ $item['label'] }}</p>
+                                <span class="rounded-md bg-white/80 px-2 py-1 text-xs font-black {{ $item['value'] === 'OK' ? 'text-emerald-700' : 'text-amber-700' }}">{{ $item['value'] }}</span>
+                            </div>
+                            <p class="mt-2 text-xs font-semibold {{ $item['value'] === 'OK' ? 'text-emerald-700' : 'text-amber-700' }}">{{ $item['detail'] }}</p>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+
+        @if($visibleSections->isNotEmpty())
+            <section class="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-black uppercase text-cyan-700">Module Launchpad</p>
+                        <h3 class="mt-1 text-lg font-black text-slate-950">Open Work Areas</h3>
+                        <p class="mt-1 text-sm font-semibold text-slate-500">Grouped by the same permissions that control your sidebar.</p>
+                    </div>
+                    <span class="rounded-md bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{{ $visibleModuleCount }} groups</span>
+                </div>
+
+                <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    @foreach($visibleSections as $section => $items)
+                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                            <div class="mb-3 flex items-center justify-between gap-3">
+                                <h4 class="text-sm font-black text-slate-950">{{ $section }}</h4>
+                                <span class="rounded-md bg-white px-2 py-1 text-xs font-black text-slate-500">{{ $items->count() }}</span>
+                            </div>
+                            <div class="grid gap-2">
+                                @foreach($items->take(5) as $item)
+                                    <a href="{{ route($item['route']) }}" class="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm hover:text-cyan-800">
+                                        <span class="truncate">{{ $item['label'] }}</span>
+                                        <span aria-hidden="true">-></span>
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
 
         @if($automationTasks->isNotEmpty())
             <section class="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -557,48 +702,96 @@
                             $total = (float) $items->sum('value');
                             $maxValue = max((float) ($items->max('value') ?? 0), 1);
                             $format = $chart['format'] ?? 'number';
+                            $nonZeroItems = $items->filter(fn ($item) => (float) ($item['value'] ?? 0) > 0)->values();
+                            $leader = $nonZeroItems->sortByDesc(fn ($item) => (float) ($item['value'] ?? 0))->first();
+                            $leaderShare = $leader && $total > 0 ? round(((float) $leader['value'] / $total) * 100, 1) : 0;
+                            $segments = [];
+                            $cursor = 0.0;
+
+                            foreach ($nonZeroItems as $item) {
+                                $value = (float) ($item['value'] ?? 0);
+                                $share = $total > 0 ? round(($value / $total) * 100, 2) : 0;
+                                $next = min(100, $cursor + $share);
+                                $segments[] = $chartColor($item['color'] ?? '#0891b2').' '.$cursor.'% '.$next.'%';
+                                $cursor = $next;
+                            }
+
+                            $donutGradient = $segments
+                                ? 'conic-gradient('.implode(', ', $segments).', #e2e8f0 '.$cursor.'% 100%)'
+                                : 'conic-gradient(#e2e8f0 0% 100%)';
                         @endphp
 
                         <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 ease-out hover:shadow-md">
                             <div class="flex flex-wrap items-start justify-between gap-3">
                                 <div>
-                                    <h4 class="text-sm font-bold text-slate-900">{{ $chart['title'] ?? 'Analysis' }}</h4>
-                                    <p class="mt-1 text-xs font-semibold text-slate-500">{{ $chart['subtitle'] ?? '' }}</p>
+                                    <p class="text-xs font-black uppercase text-cyan-700">Analytics</p>
+                                    <h4 class="mt-1 text-base font-black text-slate-950">{{ $chart['title'] ?? 'Analysis' }}</h4>
+                                    <p class="mt-1 text-xs font-semibold leading-5 text-slate-500">{{ $chart['subtitle'] ?? '' }}</p>
                                 </div>
 
-                                <span class="rounded-md bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-                                    {{ $formatMetric($total, $format) }} total
-                                </span>
+                                <div class="text-right">
+                                    <p class="text-xs font-bold uppercase text-slate-400">Total</p>
+                                    <p class="text-lg font-black text-slate-950">{{ $formatMetric($total, $format) }}</p>
+                                </div>
                             </div>
 
                             @if($total <= 0)
-                                <div class="mt-5 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
-                                    No records available yet.
+                                <div class="mt-5 grid place-items-center rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
+                                    <div class="grid h-12 w-12 place-items-center rounded-full bg-white text-slate-400 shadow-sm">
+                                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19h16M7 16V9m5 7V5m5 11v-4"/>
+                                        </svg>
+                                    </div>
+                                    <p class="mt-3 text-sm font-bold text-slate-700">No chart data yet</p>
+                                    <p class="mt-1 text-xs font-semibold text-slate-500">Once records are added, this chart will update automatically.</p>
                                 </div>
                             @else
-                                <div class="mt-5 space-y-4">
-                                    @foreach($items as $item)
-                                        @php
-                                            $value = (float) ($item['value'] ?? 0);
-                                            $width = $value > 0 ? max(5, round(($value / $maxValue) * 100, 2)) : 0;
-                                            $share = $total > 0 ? round(($value / $total) * 100, 1) : 0;
-                                            $color = $chartColor($item['color'] ?? '#0891b2');
-                                        @endphp
-
-                                        <div>
-                                            <div class="mb-1 flex items-center justify-between gap-3 text-sm">
-                                                <span class="font-semibold text-slate-700">{{ $item['label'] ?? 'Item' }}</span>
-                                                <span class="font-bold text-slate-900">
-                                                    {{ $formatMetric($value, $format) }}
-                                                    <span class="text-xs text-slate-400">({{ $share }}%)</span>
+                                <div class="mt-5 grid gap-5 lg:grid-cols-[168px_1fr]">
+                                    <div class="flex flex-col items-center justify-center rounded-lg bg-slate-50 p-4">
+                                        <div class="grid h-32 w-32 place-items-center rounded-full shadow-inner" style="background: {{ $donutGradient }};">
+                                            <div class="grid h-20 w-20 place-items-center rounded-full bg-white text-center shadow-sm">
+                                                <span>
+                                                    <span class="block text-lg font-black text-slate-950">{{ number_format($leaderShare, 0) }}%</span>
+                                                    <span class="block text-[10px] font-black uppercase text-slate-400">Top</span>
                                                 </span>
                                             </div>
-
-                                            <div class="h-3 overflow-hidden rounded-full bg-slate-100">
-                                                <div class="h-full rounded-full transition-all duration-700 ease-out" style="width: {{ $width }}%; background-color: {{ $color }};"></div>
-                                            </div>
                                         </div>
-                                    @endforeach
+                                        <p class="mt-3 max-w-36 text-center text-xs font-bold text-slate-600">
+                                            {{ $leader['label'] ?? 'No leader' }}
+                                        </p>
+                                    </div>
+
+                                    <div class="space-y-4">
+                                        @foreach($items as $item)
+                                            @php
+                                                $value = (float) ($item['value'] ?? 0);
+                                                $width = $value > 0 ? max(5, round(($value / $maxValue) * 100, 2)) : 0;
+                                                $share = $total > 0 ? round(($value / $total) * 100, 1) : 0;
+                                                $color = $chartColor($item['color'] ?? '#0891b2');
+                                            @endphp
+
+                                            <div class="rounded-lg border border-slate-100 bg-white p-3 shadow-sm">
+                                                <div class="mb-2 flex items-center justify-between gap-3 text-sm">
+                                                    <span class="flex min-w-0 items-center gap-2 font-bold text-slate-700">
+                                                        <span class="h-2.5 w-2.5 shrink-0 rounded-full" style="background-color: {{ $color }};"></span>
+                                                        <span class="truncate">{{ $item['label'] ?? 'Item' }}</span>
+                                                    </span>
+                                                    <span class="shrink-0 font-black text-slate-950">
+                                                        {{ $formatMetric($value, $format) }}
+                                                    </span>
+                                                </div>
+
+                                                <div class="h-3 overflow-hidden rounded-full bg-slate-100">
+                                                    <div class="h-full rounded-full transition-all duration-700 ease-out" style="width: {{ $width }}%; background-color: {{ $color }};"></div>
+                                                </div>
+
+                                                <div class="mt-2 flex items-center justify-between text-xs font-semibold text-slate-500">
+                                                    <span>{{ $share }}% share</span>
+                                                    <span>{{ $width }}% of max</span>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
                             @endif
                         </section>

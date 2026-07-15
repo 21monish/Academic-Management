@@ -36,13 +36,6 @@
         </div>
     </x-slot>
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        @include('partials._flash')
-        @if ($errors->any())
-            <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                {{ $errors->first() }}
-            </div>
-        @endif
-
         @if(hasPermission('staff_assignment.create') || hasPermission('staff_assignment.update'))
             <form method="POST" action="{{ route('attendance.assignments.store') }}" class="mb-6 grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-7" data-assignment-form>
                 @csrf

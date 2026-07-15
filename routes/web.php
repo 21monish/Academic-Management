@@ -6,10 +6,7 @@ use App\Http\Controllers\Automation\AutomationController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('home');
-})->name('home');
-
+Route::view('/', 'home')->name('home');
 Route::view('/features', 'public.features')->name('public.features');
 Route::view('/modules', 'public.modules')->name('public.modules');
 Route::view('/about', 'public.about')->name('public.about');

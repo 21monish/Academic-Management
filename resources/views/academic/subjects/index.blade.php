@@ -17,13 +17,12 @@
     </x-slot>
 
     <div class="py-8 max-w-6xl mx-auto sm:px-6 lg:px-8">
-        @include('partials._flash')
 
         <div class="bg-white shadow-sm rounded-lg border border-gray-100 mb-6 p-4">
             <form method="GET" action="{{ route('academic.subjects.index') }}" class="grid grid-cols-1 md:grid-cols-12 gap-3">
                 <div class="md:col-span-4">
                     <x-input-label for="q" value="Search" />
-                    <x-text-input id="q" name="q" class="block mt-1 w-full" :value="request('q')" placeholder="Code / Name / Short Name" />
+                    <x-text-input id="q" name="q" class="block mt-1 w-full" :value="request('q')" placeholder="Code / Name" />
                 </div>
 
                 <div class="md:col-span-2">
@@ -90,7 +89,7 @@
                     <tr>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Short Name</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Semester</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Credits</th>
@@ -104,7 +103,17 @@
                         <tr>
                             <td class="px-4 py-2">{{ $subject->code }}</td>
                             <td class="px-4 py-2">{{ $subject->name }}</td>
-                            <td class="px-4 py-2">{{ $subject->short_name }}</td>
+                            <td class="px-4 py-2">
+                                @php
+                                    $semesterLabels = $subject->curriculum
+                                        ->sortBy(fn ($item) => $item->semester?->semester_no ?? 999)
+                                        ->map(fn ($item) => $item->semester ? 'Sem '.$item->semester->semester_no : null)
+                                        ->filter()
+                                        ->unique()
+                                        ->values();
+                                @endphp
+                                {{ $semesterLabels->isNotEmpty() ? $semesterLabels->join(', ') : '-' }}
+                            </td>
                             <td class="px-4 py-2">{{ $subject->type }}</td>
                             <td class="px-4 py-2">{{ $subject->subject_category }}</td>
                             <td class="px-4 py-2">{{ $subject->credits ?? '—' }}</td>

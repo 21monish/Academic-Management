@@ -7,10 +7,6 @@
     </x-slot>
 
     <div class="py-8 max-w-6xl mx-auto sm:px-6 lg:px-8">
-        @if (session('status'))
-            <div class="mb-4 p-3 bg-green-100 text-green-800 rounded-md text-sm">{{ session('status') }}</div>
-        @endif
-
         <div class="bg-white shadow-sm rounded-lg overflow-hidden mb-6 p-4 border border-gray-100">
             <form method="GET" action="{{ route('students.index') }}" class="grid grid-cols-1 md:grid-cols-6 gap-3">
                 <div class="md:col-span-2">
@@ -59,6 +55,16 @@
                 </div>
 
                 <div>
+                    <x-input-label for="student_type" value="Student Type" />
+                    <select id="student_type" name="student_type" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                        <option value="">All</option>
+                        @foreach(['Regular','D2D','C2D'] as $type)
+                            <option value="{{ $type }}" @selected((string)request('student_type') === $type)>{{ $type }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
                     <x-input-label for="is_active" value="Status" />
                     <select id="is_active" name="is_active" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm">
                         <option value="">All</option>
@@ -80,6 +86,7 @@
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Enrollment No</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Photo</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Student Name</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Gender</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Programme</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">College</th>
@@ -102,6 +109,7 @@
                                 @endif
                             </td>
                             <td class="px-4 py-2">{{ $s->first_name }} {{ $s->last_name }}</td>
+                            <td class="px-4 py-2">{{ $s->student_type ?? 'Regular' }}</td>
                             <td class="px-4 py-2">{{ $s->gender ?? '—' }}</td>
                             <td class="px-4 py-2">{{ $s->programme?->name ?? $s->programme?->programme_name ?? '—' }}</td>
                             <td class="px-4 py-2">{{ $s->college?->name ?? '—' }}</td>
@@ -134,7 +142,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="10" class="px-4 py-6 text-center text-gray-500">No students found.</td></tr>
+                        <tr><td colspan="11" class="px-4 py-6 text-center text-gray-500">No students found.</td></tr>
                     @endforelse
                 </tbody>
             </table>

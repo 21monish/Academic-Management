@@ -11,7 +11,7 @@ class AutomationControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_demo_reset_runs_demo_seeders(): void
+    public function test_removed_demo_reset_automation_is_not_available(): void
     {
         $user = User::factory()->create();
         $permission = Permission::create([
@@ -24,7 +24,6 @@ class AutomationControllerTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('automations.run', 'demo-reset'))
-            ->assertRedirect()
-            ->assertSessionHas('status', 'demo reset: demo cleanup + seed complete');
+            ->assertNotFound();
     }
 }

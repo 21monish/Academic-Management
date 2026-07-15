@@ -1,7 +1,6 @@
 <x-app-layout>
     <x-slot name="header"><h2 class="text-xl font-semibold text-slate-900">Notices</h2></x-slot>
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        @include('partials._flash')
         <form method="GET" class="mb-4 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:flex-row">
             <x-text-input name="q" :value="request('q')" placeholder="Search notices" class="flex-1" />
             @if($scopedDepartment ?? null)

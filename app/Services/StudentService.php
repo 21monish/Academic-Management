@@ -36,6 +36,7 @@ class StudentService
             'programme_id' => $request->string('programme_id')->toString(),
             'category_id' => $request->string('category_id')->toString(),
             'gender' => $request->string('gender')->toString(),
+            'student_type' => $request->string('student_type')->toString(),
             'admission_type' => $request->string('admission_type')->toString(),
             'is_active' => $request->string('is_active')->toString(),
             'sort' => $request->string('sort')->toString(),
@@ -71,6 +72,10 @@ class StudentService
             $query->where('gender', $request->string('gender')->toString());
         }
 
+        if ($request->filled('student_type')) {
+            $query->where('student_type', $request->string('student_type')->toString());
+        }
+
         if ($request->filled('admission_type')) {
             $query->where('admission_type', $request->string('admission_type')->toString());
         }
@@ -100,6 +105,7 @@ class StudentService
             $this->authorizeStudentData($data, $request);
 
             $isActive = $data['is_active'] ?? true;
+            $enrollmentNo = ($data['enrollment_no'] ?? null) ?: $this->generateEnrollmentNo($data);
             $photoUrl = $request->hasFile('photo')
                 ? $this->uploads->storePublicUpload($request->file('photo'), 'uploads/photos')
                 : null;
@@ -109,7 +115,7 @@ class StudentService
                 'programme_id' => $data['programme_id'],
                 'category_id' => $data['category_id'] ?? null,
 
-                'enrollment_no' => $data['enrollment_no'],
+                'enrollment_no' => $enrollmentNo,
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'gender' => $data['gender'] ?? null,
@@ -125,6 +131,7 @@ class StudentService
                 'photo_url' => $photoUrl,
 
                 'admission_date' => $data['admission_date'] ?? null,
+                'student_type' => $data['student_type'] ?? 'Regular',
                 'admission_type' => $data['admission_type'] ?? null,
 
                 'is_active' => (bool) $isActive,
@@ -168,6 +175,7 @@ class StudentService
                 'photo_url' => $photoUrl,
 
                 'admission_date' => $data['admission_date'] ?? null,
+                'student_type' => $data['student_type'] ?? 'Regular',
                 'admission_type' => $data['admission_type'] ?? null,
 
                 'is_active' => (bool) $isActive,
@@ -205,6 +213,46 @@ class StudentService
     {
         abort_unless($this->accessScope->applyToColleges(\App\Models\College::whereKey($data['college_id']), $request->user())->exists(), 403);
         abort_unless($this->accessScope->applyToProgrammes(\App\Models\Programme::whereKey($data['programme_id']), $request->user())->exists(), 403);
+    }
+
+    private function generateEnrollmentNo(array $data): string
+    {
+        $programme = \App\Models\Programme::query()
+            ->with('department.college')
+            ->findOrFail($data['programme_id']);
+
+        $department = $programme->department;
+        $college = $department?->college;
+        $year = Carbon::parse($data['admission_date'] ?? now())->format('y');
+        $collegeCode = $this->numericCode($college?->code, $college?->college_id, 3);
+        $departmentCode = $this->numericCode($department?->code, $department?->dept_id, 2);
+        $programmeCode = $this->numericCode($programme->code, $programme->programme_id, 2);
+        $prefix = $year.$collegeCode.$departmentCode.$programmeCode;
+
+        $lastSerial = Student::query()
+            ->where('enrollment_no', 'like', $prefix.'%')
+            ->pluck('enrollment_no')
+            ->map(function (string $enrollmentNo) use ($prefix): int {
+                $serial = substr($enrollmentNo, strlen($prefix));
+
+                return ctype_digit($serial) ? (int) $serial : 0;
+            })
+            ->max() ?? 0;
+
+        do {
+            $lastSerial++;
+            $enrollmentNo = $prefix.str_pad((string) $lastSerial, 3, '0', STR_PAD_LEFT);
+        } while (Student::query()->where('enrollment_no', $enrollmentNo)->exists());
+
+        return $enrollmentNo;
+    }
+
+    private function numericCode(?string $code, mixed $fallbackId, int $length): string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $code);
+        $value = $digits !== '' ? $digits : (string) $fallbackId;
+
+        return str_pad(substr($value, -$length), $length, '0', STR_PAD_LEFT);
     }
 
     private function syncUserAccount(Student $student, bool $autoCreate): void

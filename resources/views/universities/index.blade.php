@@ -7,10 +7,6 @@
     </x-slot>
 
     <div class="py-8 max-w-5xl mx-auto sm:px-6 lg:px-8">
-        @if (session('status'))
-            <div class="mb-4 p-3 bg-green-100 text-green-800 rounded-md text-sm">{{ session('status') }}</div>
-        @endif
-
         <div class="bg-white shadow-sm rounded-lg overflow-hidden mb-6 p-4 border border-gray-100">
             <form method="GET" action="{{ route('universities.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div class="md:col-span-3">

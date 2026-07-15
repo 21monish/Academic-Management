@@ -18,8 +18,7 @@ Route::middleware(['auth', 'permission:student.view'])->prefix('students')->name
 
     Route::get('/{student}', [StudentController::class, 'show'])->name('show');
     Route::get('/{student}/edit', [StudentController::class, 'edit'])->middleware('permission:student.update')->name('edit');
-    Route::put('/{student}', [StudentController::class, 'update'])->middleware('permission:student.update')->name('update');
-    Route::patch('/{student}', [StudentController::class, 'update'])->middleware('permission:student.update')->name('update');
+    Route::match(['put', 'patch'], '/{student}', [StudentController::class, 'update'])->middleware('permission:student.update')->name('update');
 
     Route::delete('/{student}', [StudentController::class, 'destroy'])->middleware('permission:student.delete')->name('destroy');
 

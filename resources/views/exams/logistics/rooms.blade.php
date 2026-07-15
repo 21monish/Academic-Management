@@ -1,7 +1,6 @@
 <x-app-layout>
     <x-slot name="header"><h2 class="text-xl font-semibold text-slate-900">Exam Rooms</h2></x-slot>
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        @include('partials._flash')
         <form method="POST" action="{{ route('exams.logistics.rooms.store') }}" class="mb-6 grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-4">
             @csrf
             <select name="college_id" class="rounded-md border-gray-300" required><option value="">College</option>@foreach($colleges as $college)<option value="{{ $college->college_id }}">{{ $college->name }}</option>@endforeach</select>

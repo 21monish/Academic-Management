@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Permission;
-use App\Models\University;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Database\Seeder;
@@ -13,16 +12,6 @@ class SuperAdminSeeder extends Seeder
 {
     public function run(): void
     {
-        $university = University::firstOrCreate(
-            ['name' => 'Gujarat Technological University'],
-            [
-                'address' => 'Chandkheda, Ahmedabad, Gujarat',
-                'email' => 'info@gtu.ac.in',
-                'website' => 'https://www.gtu.ac.in',
-                'established_date' => '2007-05-15',
-            ]
-        );
-
         $superAdminRole = UserRole::updateOrCreate(
             [
                 'role_name' => 'Super Admin',
@@ -41,7 +30,10 @@ class SuperAdminSeeder extends Seeder
         $admin = User::firstOrNew(['username' => 'admin']);
         $admin->fill([
             'role_id' => $superAdminRole->role_id,
-            'university_id' => $university->university_id,
+            'university_id' => null,
+            'college_id' => null,
+            'dept_id' => null,
+            'programme_id' => null,
             'email' => $admin->email ?: 'admin@gtu-erp.local',
             'is_active' => true,
             'is_verified' => true,

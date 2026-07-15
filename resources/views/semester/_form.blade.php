@@ -15,8 +15,8 @@
 
             @foreach($programmes as $programme)
                 <option
-                    value="{{ $programme->id }}"
-                    @selected(old('programme_id', $semester->programme_id ?? '') == $programme->id)>
+                    value="{{ $programme->programme_id }}"
+                    @selected(old('programme_id', $semester->programme_id ?? '') == $programme->programme_id)>
                     {{ $programme->name }}
                 </option>
             @endforeach

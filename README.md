@@ -1,59 +1,82 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# GTU-ITR Academic Management System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+GTU-ITR is a Laravel academic ERP for managing institutions, academics, staff, students, attendance, exams, fees, leave, notices, reports, permissions, chatbot support, and system health.
 
-## About Laravel
+## Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.2+
+- Laravel 12
+- MySQL
+- Vite, Tailwind CSS, Alpine.js
+- Pest for tests
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Local Setup
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan db:seed
+npm run build
+php artisan serve
+```
 
-## Learning Laravel
+Default local URL:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+```text
+http://localhost:8000
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Fresh installs create a Super Admin user:
 
-## Laravel Sponsors
+```text
+Username: admin
+Password: ChangeMe123!
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+The account is forced to change its password on first login.
 
-### Premium Partners
+## Main Modules
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- Institution: universities, colleges, departments
+- Academic: categories, academic years, programmes, semesters, subjects, curriculum, elective groups
+- People: staff, students, users, roles, direct permissions
+- Attendance: staff assignments, timetable slots, lectures, marking, summaries, defaulters
+- Exams: exams, subjects, grades, marks, results, backlogs, promotions
+- Exam logistics: rooms, seating, invigilators, hall tickets, practical schedules, batches, marks
+- Fees: categories, structures, ledgers, collections, receipts, concessions, scholarships, reports
+- Leave: types, balances, applications, approvals, cancellations, substitutes, holidays
+- Notices: categories, notices, audiences, attachments, acknowledgements
+- Reports: student, staff, attendance, result cards, fee receipts, hall tickets, activity
+- System: settings, branding, health checks, chatbot knowledge
 
-## Contributing
+## Access Control
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+The app uses custom role and permission tables with route-level permission middleware. Data visibility is scoped by `AccessScopeService` across university, college, department, programme, staff assignment, and own-record levels.
 
-## Code of Conduct
+When adding a new module, apply both:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- Route permission middleware, for example `permission:student.view`
+- Scope checks through `AccessScopeService` before showing, updating, or deleting records
 
-## Security Vulnerabilities
+## Useful Commands
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+php artisan route:list
+php artisan test
+php artisan config:clear
+php artisan optimize:clear
+npm run build
+```
 
-## License
+System health checks are available inside the application at:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```text
+/system/health
+```
+
+## Documentation
+
+See `APPLICATION_USER_GUIDE.txt` for the full user-facing guide and module walkthrough.

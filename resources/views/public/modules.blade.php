@@ -15,7 +15,7 @@
 
         <div class="mt-8 grid gap-4 lg:grid-cols-2">
             @foreach([
-                ['Institution', ['Universities', 'Colleges', 'Departments', 'Users', 'Roles & Permissions']],
+                ['Institution', ['Universities', 'Colleges', 'Departments', 'Users', 'Roles']],
                 ['People', ['Staff', 'Subject Assignments', 'Students', 'People Categories']],
                 ['Academic', ['Academic Years', 'Programmes', 'Semesters', 'Subjects', 'Curriculum', 'Elective Groups']],
                 ['Attendance', ['Timetable Slots', 'Lectures', 'Attendance Summary', 'Defaulters']],

@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\UserRole;
 use App\Services\AccessScopeService;
 use App\Services\UploadService;
+use App\Support\ValidationRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -101,12 +102,12 @@ class StaffController extends Controller
             'dept_id' => ['nullable', 'exists:departments,dept_id'],
 
             'employee_code' => ['required', 'string', 'max:30', 'unique:staff,employee_code', 'unique:users,username'],
-            'first_name' => ['required', 'string', 'max:80'],
-            'last_name' => ['required', 'string', 'max:80'],
+            'first_name' => ValidationRules::shortText(true, 80),
+            'last_name' => ValidationRules::shortText(true, 80),
             'gender' => ['nullable', 'in:Male,Female,Other'],
             'dob' => ['nullable', 'date'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'email' => ['required', 'email', 'max:150', 'unique:staff,email', 'unique:users,email'],
+            'phone' => ValidationRules::phone(),
+            'email' => [...ValidationRules::email(true, 150), 'unique:staff,email', 'unique:users,email'],
             'address' => ['nullable', 'string'],
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
 
@@ -233,15 +234,13 @@ class StaffController extends Controller
                 'unique:staff,employee_code,' . $staff->staff_id . ',staff_id',
                 Rule::unique('users', 'username')->ignore($linkedUserId, 'user_id'),
             ],
-            'first_name' => ['required', 'string', 'max:80'],
-            'last_name' => ['required', 'string', 'max:80'],
+            'first_name' => ValidationRules::shortText(true, 80),
+            'last_name' => ValidationRules::shortText(true, 80),
             'gender' => ['nullable', 'in:Male,Female,Other'],
             'dob' => ['nullable', 'date'],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'phone' => ValidationRules::phone(),
             'email' => [
-                'required',
-                'email',
-                'max:150',
+                ...ValidationRules::email(true, 150),
                 'unique:staff,email,' . $staff->staff_id . ',staff_id',
                 Rule::unique('users', 'email')->ignore($linkedUserId, 'user_id'),
             ],

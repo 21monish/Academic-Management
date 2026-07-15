@@ -34,6 +34,7 @@ return new class extends Migration
                 ->nullOnDelete();
 
             $table->date('admission_date')->nullable();
+            $table->enum('student_type', ['Regular', 'D2D', 'C2D'])->default('Regular');
             $table->enum('admission_type', ['Direct', 'ACPC', 'Management'])->nullable();
             $table->boolean('is_active')->default(true);
         });

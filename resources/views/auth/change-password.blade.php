@@ -4,18 +4,6 @@
     </x-slot>
 
     <div class="py-8 max-w-md mx-auto sm:px-6 lg:px-8">
-        @if (session('status'))
-            <div class="mb-4 p-3 bg-green-100 text-green-800 rounded-md text-sm">{{ session('status') }}</div>
-        @endif
-
-        @if ($errors->any())
-            <div class="mb-4 p-3 bg-red-100 text-red-800 rounded-md text-sm">
-                @foreach ($errors->all() as $error)
-                    <p>{{ $error }}</p>
-                @endforeach
-            </div>
-        @endif
-
         @if (auth()->user()->must_change_password)
             <div class="mb-4 p-3 bg-amber-100 text-amber-800 rounded-md text-sm">
                 You must change your password before continuing.

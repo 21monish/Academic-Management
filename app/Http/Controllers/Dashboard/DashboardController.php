@@ -25,11 +25,14 @@ use App\Services\AccessScopeService;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    private const DASHBOARD_CACHE_SECONDS = 120;
+
     public function __invoke(Request $request): View
     {
         $user = $request->user();
@@ -59,17 +62,48 @@ class DashboardController extends Controller
                 ->first();
         }
 
+        $payload = Cache::remember(
+            $this->dashboardCacheKey($roleName, $user, $student, $staff),
+            now()->addSeconds(self::DASHBOARD_CACHE_SECONDS),
+            fn () => [
+                'stats' => $this->statsFor($roleName, $user, $student, $staff),
+                'charts' => $this->chartsFor($roleName, $user),
+                'analytics' => $this->analytics($user),
+                'recentActivity' => $this->recentActivity($roleName),
+                'dashboardData' => $this->dashboardData($roleName, $user, $student, $staff),
+            ]
+        );
+
         return view('dashboard.index', [
             'roleName' => $roleName,
-            'stats' => $this->statsFor($roleName, $user, $student, $staff),
-            'charts' => $this->chartsFor($roleName, $user),
-            'analytics' => $this->analytics($user),
-            'recentActivity' => $this->recentActivity($roleName),
+            'stats' => $payload['stats'],
+            'charts' => $payload['charts'],
+            'analytics' => $payload['analytics'],
+            'recentActivity' => $payload['recentActivity'],
             'student' => $student,
             'staff' => $staff,
-            'dashboardData' => $this->dashboardData($roleName, $user, $student, $staff),
+            'dashboardData' => $payload['dashboardData'],
             'pageSections' => $this->pageSections(),
         ]);
+    }
+
+    private function dashboardCacheKey(string $roleName, ?User $user, ?Student $student, ?Staff $staff): string
+    {
+        $scopeFingerprint = [
+            'user_id' => $user?->user_id,
+            'role' => $roleName,
+            'university_id' => $user?->university_id,
+            'college_id' => $user?->college_id,
+            'dept_id' => $user?->dept_id,
+            'programme_id' => $user?->programme_id,
+            'student_id' => $student?->student_id,
+            'staff_id' => $staff?->staff_id,
+            'user_updated_at' => $user?->updated_at?->timestamp,
+            'student_updated_at' => $student?->updated_at?->timestamp,
+            'staff_updated_at' => $staff?->updated_at?->timestamp,
+        ];
+
+        return 'dashboard:payload:v2:'.md5(json_encode($scopeFingerprint));
     }
 
     private function pageSections(): array
@@ -79,7 +113,7 @@ class DashboardController extends Controller
                 ['label' => 'Colleges', 'route' => 'colleges.index', 'permission' => 'college.view'],
                 ['label' => 'Departments', 'route' => 'departments.index', 'permission' => 'department.view'],
                 ['label' => 'Users', 'route' => 'users.index', 'permission' => ['user.view', 'user_permission.view', 'user_permission.update']],
-                ['label' => 'Roles & Permissions', 'route' => 'roles.index', 'permission' => 'role.view'],
+                ['label' => 'Roles', 'route' => 'roles.index', 'permission' => 'role.view'],
             ],
             'People' => [
                 ['label' => 'Staff', 'route' => 'staff.index', 'permission' => 'staff.view'],

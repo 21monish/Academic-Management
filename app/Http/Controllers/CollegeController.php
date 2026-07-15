@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\College;
 use App\Models\University;
 use App\Services\AccessScopeService;
+use App\Support\ValidationRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -57,10 +58,10 @@ class CollegeController extends Controller
         $validated = $request->validate([
             'university_id' => ['required', 'exists:universities,university_id'],
             'code' => ['required', 'string', 'max:10', 'unique:colleges,code'],
-            'name' => ['required', 'string', 'max:200'],
+            'name' => ValidationRules::shortText(true, 200),
             'address' => ['nullable', 'string'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'email' => ['nullable', 'email', 'max:150'],
+            'phone' => ValidationRules::phone(),
+            'email' => ValidationRules::email(false, 150),
             'principal_name' => ['nullable', 'string', 'max:150'],
             'affiliation_type' => ['nullable', 'in:Autonomous,Affiliated,Constituent'],
             'college_type' => ['nullable', 'in:Government,Private,Grant-in-Aid'],
@@ -90,10 +91,10 @@ class CollegeController extends Controller
         $validated = $request->validate([
             'university_id' => ['required', 'exists:universities,university_id'],
             'code' => ['required', 'string', 'max:10', 'unique:colleges,code,'.$college->college_id.',college_id'],
-            'name' => ['required', 'string', 'max:200'],
+            'name' => ValidationRules::shortText(true, 200),
             'address' => ['nullable', 'string'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'email' => ['nullable', 'email', 'max:150'],
+            'phone' => ValidationRules::phone(),
+            'email' => ValidationRules::email(false, 150),
             'principal_name' => ['nullable', 'string', 'max:150'],
             'affiliation_type' => ['nullable', 'in:Autonomous,Affiliated,Constituent'],
             'college_type' => ['nullable', 'in:Government,Private,Grant-in-Aid'],

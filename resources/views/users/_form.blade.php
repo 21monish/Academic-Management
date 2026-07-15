@@ -38,7 +38,7 @@
         'department' => 'Departments',
         'user' => 'Users',
         'user_permission' => 'User Permission Updater',
-        'role' => 'Roles & Permissions',
+        'role' => 'Roles',
         'staff' => 'Staff',
         'student' => 'Students',
         'category' => 'People Categories',
@@ -192,7 +192,7 @@
 
 <div>
     <x-input-label for="phone" value="Phone" />
-    <x-text-input id="phone" name="phone" class="block mt-1 w-full" :value="old('phone', $user?->phone)" />
+    <x-text-input id="phone" name="phone" class="block mt-1 w-full" :value="old('phone', $user?->phone)" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="10 digit phone number" />
     <x-input-error :messages="$errors->get('phone')" class="mt-2" />
 </div>
 

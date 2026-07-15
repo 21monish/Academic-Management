@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Department;
+use App\Models\Curriculum;
 use App\Models\Programme;
 use App\Models\Semester;
 use App\Models\Subject;
@@ -18,14 +19,16 @@ class SubjectService
 
     public function index(Request $request): array
     {
-        $query = $this->accessScope->applyToSubjects(Subject::with(['department', 'curriculum']), $request->user());
+        $query = $this->accessScope->applyToSubjects(
+            Subject::with(['department', 'curriculum.semester', 'curriculum.programme']),
+            $request->user()
+        );
 
         $filters = $this->filters($request, $query);
 
         $sortable = [
             'code' => 'Code',
             'name' => 'Name',
-            'short_name' => 'Short Name',
             'type' => 'Type',
             'subject_category' => 'Category',
             'credits' => 'Credits',
@@ -47,13 +50,19 @@ class SubjectService
     public function createViewData(): array
     {
         $departments = $this->accessScope->applyToDepartments(Department::query(), request()->user())->orderBy('name')->get(['dept_id', 'name']);
+        $programmes = $this->accessScope->applyToProgrammes(Programme::query(), request()->user())
+            ->orderBy('name')
+            ->get(['programme_id', 'dept_id', 'code', 'name']);
+        $semesters = $this->accessScope->applyToSemesters(Semester::query(), request()->user())
+            ->orderBy('semester_no')
+            ->get(['semester_id', 'programme_id', 'semester_no']);
 
         return [
             'departments' => $departments,
-            'programmes' => collect(),
-            'semesters' => collect(),
+            'programmes' => $programmes,
+            'semesters' => $semesters,
             'subjectTypes' => ['Theory' => 'Theory', 'Lab' => 'Lab', 'Tutorial' => 'Tutorial'],
-            'categories' => ['Core', 'Elective', 'Open Elective', 'Audit'],
+            'categories' => ['Core' => 'Core', 'Elective' => 'Elective', 'Open Elective' => 'Open Elective', 'Audit' => 'Audit'],
             'statuses' => ['1' => 'Active', '0' => 'Inactive'],
         ];
     }
@@ -62,37 +71,43 @@ class SubjectService
     {
         abort_unless($this->accessScope->applyToSubjects(Subject::whereKey($subject->subject_id), request()->user())->exists(), 403);
 
+        $subject->loadMissing('curriculum.semester', 'curriculum.programme');
+        $curriculum = $subject->curriculum->first();
+
         $programmes = $this->accessScope->applyToProgrammes(Programme::where('dept_id', $subject->dept_id), request()->user())
             ->orderBy('name')
             ->get();
 
-        $semesters = $this->accessScope->applyToSemesters(Semester::where('programme_id', $subject->programme_id ?? 0), request()->user())
+        $semesters = $this->accessScope->applyToSemesters(Semester::where('programme_id', $curriculum?->programme_id ?? 0), request()->user())
             ->orderBy('semester_no')
             ->get();
 
-        return $this->createViewData() + [
-            'programmes' => $programmes,
-            'semesters' => $semesters,
-        ];
+        $data = $this->createViewData();
+        $data['programmes'] = $programmes;
+        $data['semesters'] = $semesters;
+        $data['selectedProgrammeId'] = $curriculum?->programme_id;
+        $data['selectedSemesterId'] = $curriculum?->semester_id;
+
+        return $data;
     }
 
     public function show(Subject $subject): Subject
     {
         abort_unless($this->accessScope->applyToSubjects(Subject::whereKey($subject->subject_id), request()->user())->exists(), 403);
 
-        return $subject->load(['department', 'curriculum', 'staffAssignments', 'timetableSlots']);
+        return $subject->load(['department', 'curriculum.semester', 'curriculum.programme', 'staffAssignments', 'timetableSlots']);
     }
 
     public function store(array $data): Subject
     {
         abort_unless($this->accessScope->applyToDepartments(Department::whereKey($data['department_id']), request()->user())->exists(), 403);
+        $this->authorizeCurriculumSelection($data);
 
         return 
             tap(Subject::create([
                 'dept_id' => $data['department_id'],
                 'code' => $data['code'],
                 'name' => $data['name'],
-                'short_name' => $data['short_name'],
                 'type' => $data['type'],
                 'subject_category' => $data['category'],
                 'credits' => $data['credits'] ?? null,
@@ -100,8 +115,8 @@ class SubjectService
                 'lab_hours' => $data['practical_hours'] ?? null,
                 'tutorial_hours' => $data['tutorial_hours'] ?? null,
                 'is_active' => true,
-            ]), function ($subject) {
-                // no-op
+            ]), function ($subject) use ($data) {
+                $this->syncCurriculum($subject, $data);
             });
     }
 
@@ -109,12 +124,12 @@ class SubjectService
     {
         abort_unless($this->accessScope->applyToSubjects(Subject::whereKey($subject->subject_id), request()->user())->exists(), 403);
         abort_unless($this->accessScope->applyToDepartments(Department::whereKey($data['department_id']), request()->user())->exists(), 403);
+        $this->authorizeCurriculumSelection($data);
 
         $subject->update([
             'dept_id' => $data['department_id'],
             'code' => $data['code'],
             'name' => $data['name'],
-            'short_name' => $data['short_name'],
             'type' => $data['type'],
             'subject_category' => $data['category'],
             'credits' => $data['credits'] ?? null,
@@ -122,6 +137,8 @@ class SubjectService
             'lab_hours' => $data['practical_hours'] ?? null,
             'tutorial_hours' => $data['tutorial_hours'] ?? null,
         ]);
+
+        $this->syncCurriculum($subject, $data);
 
         return $subject;
     }
@@ -146,8 +163,7 @@ class SubjectService
             $q = $request->query('q');
             $query->where(function (Builder $qQuery) use ($q) {
                 $qQuery->where('code', 'like', "%{$q}%")
-                    ->orWhere('name', 'like', "%{$q}%")
-                    ->orWhere('short_name', 'like', "%{$q}%");
+                    ->orWhere('name', 'like', "%{$q}%");
             });
         }
 
@@ -169,6 +185,31 @@ class SubjectService
             'type' => $request->query('type'),
             'is_active' => $request->query('is_active'),
         ];
+    }
+
+    private function authorizeCurriculumSelection(array $data): void
+    {
+        abort_unless($this->accessScope->applyToProgrammes(Programme::whereKey($data['programme_id']), request()->user())->exists(), 403);
+        abort_unless($this->accessScope->applyToSemesters(
+            Semester::whereKey($data['semester_id'])->where('programme_id', $data['programme_id']),
+            request()->user()
+        )->exists(), 403);
+    }
+
+    private function syncCurriculum(Subject $subject, array $data): void
+    {
+        Curriculum::query()
+            ->where('subject_id', $subject->subject_id)
+            ->delete();
+
+        Curriculum::query()->create([
+            'programme_id' => $data['programme_id'],
+            'semester_id' => $data['semester_id'],
+            'subject_id' => $subject->subject_id,
+            'is_mandatory' => $data['category'] === 'Core',
+            'max_marks' => 100,
+            'min_passing_marks' => 35,
+        ]);
     }
 }
 

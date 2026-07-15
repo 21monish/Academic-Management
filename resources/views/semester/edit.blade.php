@@ -1,9 +1,6 @@
 <x-app-layout>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-    {{-- Flash Messages --}}
-    @include('partials.flash')
-
     <div class="bg-white rounded-lg shadow">
 
         {{-- Header --}}
@@ -19,21 +16,6 @@
                 Update semester information.
             </p>
         </div>
-
-        {{-- Validation Errors --}}
-        @if($errors->any())
-            <div class="mx-6 mt-6 rounded-md bg-red-50 border border-red-200 p-4">
-                <div class="font-semibold text-red-700 mb-2">
-                    Please fix the following errors:
-                </div>
-
-                <ul class="list-disc list-inside text-red-600 text-sm">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
 
         {{-- Form --}}
         <form

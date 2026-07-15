@@ -326,6 +326,105 @@ test('student creation creates login from enrollment number and dob', function (
     expect($login->must_change_password)->toBeTrue();
 });
 
+test('student enrollment number is generated from year and hierarchy codes', function () {
+    $universityId = DB::table('universities')->insertGetId([
+        'name' => 'Enrollment University',
+    ], 'university_id');
+    $collegeId = DB::table('colleges')->insertGetId([
+        'university_id' => $universityId,
+        'code' => '104',
+        'name' => 'College 104',
+    ], 'college_id');
+    $departmentId = DB::table('departments')->insertGetId([
+        'college_id' => $collegeId,
+        'code' => '31',
+        'name' => 'Department 31',
+    ], 'dept_id');
+    $programmeId = DB::table('programmes')->insertGetId([
+        'dept_id' => $departmentId,
+        'code' => '07',
+        'name' => 'Programme 07',
+        'level' => 'UG',
+    ], 'programme_id');
+
+    $this->seed(RolePermissionSeeder::class);
+    $superAdmin = UserRole::query()->where('role_name', 'Super Admin')->firstOrFail();
+    $manager = User::factory()->create(['role_id' => $superAdmin->role_id]);
+
+    $response = $this->actingAs($manager)->post(route('students.store'), [
+        'college_id' => $collegeId,
+        'programme_id' => $programmeId,
+        'first_name' => 'Generated',
+        'last_name' => 'Student',
+        'dob' => '2005-04-21',
+        'admission_date' => '2024-07-01',
+        'student_type' => 'Regular',
+        'is_active' => '1',
+    ]);
+
+    $student = Student::query()->where('first_name', 'Generated')->firstOrFail();
+
+    $response->assertRedirect(route('students.show', $student));
+    expect($student->enrollment_no)->toBe('241043107001');
+    expect($student->userAccount?->username)->toBe('241043107001');
+});
+
+test('lateral entry students can only enroll from semester three onward', function (string $admissionType, string $enrollmentNo) {
+    [$collegeId, , $programmeId] = photoUploadLookups();
+    $this->seed(RolePermissionSeeder::class);
+
+    $superAdmin = UserRole::query()->where('role_name', 'Super Admin')->firstOrFail();
+    $manager = User::factory()->create(['role_id' => $superAdmin->role_id]);
+
+    $student = Student::query()->create([
+        'college_id' => $collegeId,
+        'programme_id' => $programmeId,
+        'enrollment_no' => $enrollmentNo,
+        'first_name' => 'Dev',
+        'last_name' => 'Patel',
+        'dob' => '2004-04-21',
+        'student_type' => $admissionType,
+        'is_active' => true,
+    ]);
+
+    $semOneId = DB::table('semesters')->insertGetId([
+        'programme_id' => $programmeId,
+        'semester_no' => 1,
+        'academic_year' => '2026-27',
+    ], 'semester_id');
+    $semThreeId = DB::table('semesters')->insertGetId([
+        'programme_id' => $programmeId,
+        'semester_no' => 3,
+        'academic_year' => '2026-27',
+    ], 'semester_id');
+    $yearId = DB::table('academic_years')->insertGetId([
+        'college_id' => $collegeId,
+        'label' => '2026-27',
+        'status' => 'Active',
+        'is_current' => true,
+    ], 'academic_year_id');
+
+    $this->actingAs($manager)->post(route('students.enrollments.store', $student), [
+        'semester_id' => $semOneId,
+        'academic_year_id' => $yearId,
+        'enrolled_on' => '2026-07-14',
+        'status' => 'Active',
+    ])->assertSessionHasErrors('semester_id');
+
+    $this->actingAs($manager)->post(route('students.enrollments.store', $student), [
+        'semester_id' => $semThreeId,
+        'academic_year_id' => $yearId,
+        'enrolled_on' => '2026-07-14',
+        'status' => 'Active',
+    ])->assertRedirect(route('students.show', $student));
+
+    expect($student->enrollments()->where('semester_id', $semThreeId)->exists())->toBeTrue();
+    expect($student->enrollments()->where('semester_id', $semOneId)->exists())->toBeFalse();
+})->with([
+    ['D2D', 'D2D001'],
+    ['C2D', 'C2D001'],
+]);
+
 test('student profile remains the owner of its linked login account', function () {
     [$collegeId, , $programmeId] = photoUploadLookups();
     $this->seed(RolePermissionSeeder::class);

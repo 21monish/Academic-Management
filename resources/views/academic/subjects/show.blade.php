@@ -15,7 +15,6 @@
     </x-slot>
 
     <div class="py-8 max-w-6xl mx-auto sm:px-6 lg:px-8">
-        @include('partials._flash')
 
         <div class="bg-white shadow-sm rounded-lg border border-gray-100 p-6">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -28,15 +27,11 @@
                     <div class="mt-1 text-gray-900">{{ $subject->name }}</div>
                 </div>
 
-                <div class="md:col-span-4">
-                    <div class="text-xs font-medium text-gray-500 uppercase">Short Name</div>
-                    <div class="mt-1 text-gray-900">{{ $subject->short_name }}</div>
-                </div>
-                <div class="md:col-span-4">
+                <div class="md:col-span-6">
                     <div class="text-xs font-medium text-gray-500 uppercase">Type</div>
                     <div class="mt-1 text-gray-900">{{ $subject->type }}</div>
                 </div>
-                <div class="md:col-span-4">
+                <div class="md:col-span-6">
                     <div class="text-xs font-medium text-gray-500 uppercase">Category</div>
                     <div class="mt-1 text-gray-900">{{ $subject->subject_category }}</div>
                 </div>
@@ -63,7 +58,27 @@
                     <div class="mt-1 text-gray-900">{{ $subject->department?->name ?? '—' }}</div>
                 </div>
 
-                <div class="md:col-span-6">
+                <div class="md:col-span-3">
+                    <div class="text-xs font-medium text-gray-500 uppercase">Programme</div>
+                    <div class="mt-1 text-gray-900">{{ $subject->curriculum->pluck('programme.name')->filter()->unique()->join(', ') ?: '-' }}</div>
+                </div>
+
+                <div class="md:col-span-3">
+                    <div class="text-xs font-medium text-gray-500 uppercase">Semester</div>
+                    <div class="mt-1 text-gray-900">
+                        @php
+                            $semesterLabels = $subject->curriculum
+                                ->sortBy(fn ($item) => $item->semester?->semester_no ?? 999)
+                                ->map(fn ($item) => $item->semester ? 'Sem '.$item->semester->semester_no : null)
+                                ->filter()
+                                ->unique()
+                                ->values();
+                        @endphp
+                        {{ $semesterLabels->isNotEmpty() ? $semesterLabels->join(', ') : '-' }}
+                    </div>
+                </div>
+
+                <div class="md:col-span-12">
                     <div class="text-xs font-medium text-gray-500 uppercase">Status</div>
                     <div class="mt-2">
                         @if($subject->is_active)

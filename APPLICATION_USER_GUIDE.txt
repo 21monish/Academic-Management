@@ -1,7 +1,7 @@
 GTU-ITR Academic Management System - Application User Guide
 ===========================================================
 
-Last updated: 11 July 2026
+Last updated: 13 July 2026
 
 Project folder:
 C:\xampp\htdocs\GTU-ITR
@@ -96,29 +96,15 @@ Password: ChangeMe123!
 On first login, the Super Admin is forced to change this password.
 
 
-4. Optional Demo Data
----------------------
+4. Sample Data
+--------------
 
-For a fuller demonstration database, run:
+Demo seeders have been removed. Use the application screens to create real
+universities, colleges, departments, programmes, semesters, subjects, staff,
+students, and user accounts.
 
-php artisan db:seed --class=Database\\Seeders\\DemoDataSeeder
-
-The demo seeder creates sample universities, colleges, departments,
-programmes, subjects, staff, students, users, and related records.
-
-Common demo-style accounts created by the demo seeder may include:
-
-- admin / ChangeMe123!
-- demo.admin / password
-- demo.hod / password
-- demo.faculty / password
-- demo.student / password
-
-Only use demo data in a local or test environment.
-
-To reset demo data from the UI, authorized users can use the dashboard
-automation "Reset Demo Data". It runs the demo cleanup and demo seeders when
-those classes exist.
+The default seed command only creates system roles, permissions, settings,
+chatbot knowledge, and the Super Admin account.
 
 
 5. Login, Logout, And Password Change
@@ -164,16 +150,28 @@ After login, the application shows:
 - A desktop sidebar.
 - A mobile menu on smaller screens.
 - Role and email information.
-- Dashboard link.
-- Permission-based module sections.
+- A direct Dashboard link.
+- Permission-based module sections shown as dropdowns.
 - Profile link when profile.view is allowed.
 - Exit or Log Out button.
 
+Navigation behavior:
+
+- Home/Dashboard is a direct link, not a dropdown.
+- Institution, People, Academic, Attendance, Exams, Fees, Leave, Notices,
+  Reports, and System are dropdown sections.
+- On desktop, moving the mouse over a dropdown opens it.
+- Dropdowns have a smooth open animation.
+- The current active section stays open automatically.
+- On mobile, tap the menu button, then tap a section to open its links.
+
 Branding is dynamic:
 
-- If the logged-in user belongs to a university with a logo, that university
-  name and logo are shown.
-- Otherwise, global branding from System Settings is used.
+- Super Admin uses the global/system application name and logo.
+- Other users use their assigned university name and logo when available.
+- If a non-Super Admin user has no university logo, global branding from
+  System Settings is used as a fallback.
+- The browser tab title and favicon follow the same rule.
 
 If a menu item is missing, the usual causes are:
 
@@ -295,14 +293,25 @@ The app infers scope from user fields and linked staff/student records:
 Menu:
 
 Institution > Users
-Institution > Roles & Permissions
+Institution > Roles
 
 Create or edit a role:
 
-1. Open Institution > Roles & Permissions.
+1. Open Institution > Roles.
 2. Add or edit a role.
-3. Enter role name, description, university if applicable, and active status.
+3. Enter role name, description, university if applicable, staff type if this
+   role is for staff, and active status.
 4. Save.
+
+Staff type on roles:
+
+- Use Teaching for teaching roles such as Professor, Associate Professor,
+  Assistant Professor, Lecturer, Visiting Faculty, or Lab Instructor.
+- Use Non-Teaching for operational roles such as Clerk, Lab Assistant,
+  Librarian, Accountant, Transport Staff, or other office/support roles.
+- Use Both when the same role can be selected for either teaching or
+  non-teaching staff.
+- Staff creation uses this value to show only matching backend role options.
 
 Create or edit a user:
 
@@ -373,7 +382,7 @@ Institution > Universities
 Institution > Colleges
 Institution > Departments
 Institution > Users
-Institution > Roles & Permissions
+Institution > Roles
 
 Universities:
 
@@ -399,7 +408,7 @@ Use this to create login accounts, assign roles, choose hierarchy scope,
 activate/deactivate accounts, force password changes, and grant direct
 permissions.
 
-Roles & Permissions:
+Roles:
 
 Use this to create and maintain role names. Access is ultimately enforced
 through permissions attached to roles and/or directly to users.
@@ -421,11 +430,18 @@ Staff:
 2. Add Staff.
 3. Select college and department.
 4. Enter employee code, name, gender, date of birth, phone, email, address,
-   photo, staff type, employment type, joining date, and active status.
-5. For Teaching staff, enter qualification, specialization, designation,
+   photo, staff type, role, employment type, joining date, and active status.
+5. Select Staff Type:
+   Teaching, Non-Teaching, or Both.
+6. Select Role.
+   The role dropdown comes from Institution > Roles and is
+   filtered by the selected staff type.
+7. Select Employment Type:
+   Permanent, Contractual, or Visiting.
+8. For Teaching staff, enter qualification, specialization, designation,
    experience, and research details where available.
-6. For Non-Teaching staff, enter role, section, and grade where available.
-7. Save.
+9. For Non-Teaching staff, enter role, section, and grade where available.
+10. Save.
 
 When staff is saved with an email, the system automatically creates or updates
 the linked Staff login user. The username is the employee code. The first
@@ -729,8 +745,6 @@ Reports > Fee Receipts
 Reports > Hall Ticket PDF
 Reports > Staff Reports
 Reports > Activity Logs
-Reports > System Settings
-Reports > System Health
 
 Student Reports:
 View and print student profiles.
@@ -754,27 +768,35 @@ Activity Logs:
 Review important create/update/delete and request activity. Usually limited to
 high-privilege users.
 
-System Settings:
-Manage global application branding and support details, and view runtime
-configuration.
-
-System Health:
-View system status checks and environment information where permitted.
-
 Export:
 The reports controller includes an export route for report types. Use it only
 where the UI exposes an export action and the user has the related report
 permission.
 
+Print branding:
 
-20. System Settings
--------------------
+- Student reports, result cards, fee receipts, hall tickets, and staff reports
+  use the university logo/name belonging to the printed record.
+- The logged-in user's university logo is not used for another student's or
+  staff member's document.
+- If the printed record's university has no logo, the print header falls back
+  to the default favicon image instead of pretending the global system logo is
+  that university's logo.
+- Hall tickets show the student photo on the right side when a student photo is
+  available.
+- Wide tables are wrapped with horizontal scrolling so columns remain usable on
+  smaller screens.
+
+
+20. System Module
+-----------------
 
 Menu:
 
-Reports > System Settings
+System > System Settings
+System > System Health
 
-The System Settings page manages global application branding:
+System Settings manages global fallback application branding:
 
 - Application Name
 - Application Subtitle
@@ -785,6 +807,14 @@ The System Settings page manages global application branding:
 - Footer Text
 - Logo URL / saved path
 - Logo upload
+
+Important branding note:
+
+- The System Settings logo is the global fallback/logo for Super Admin,
+  public/login pages, and users without a university logo.
+- University logos should be uploaded from Institution > Universities.
+- A university logo is stored on that university record only. It is not saved
+  as the logo for the entire system.
 
 The same page also shows read-only runtime configuration:
 
@@ -803,6 +833,10 @@ The same page also shows read-only runtime configuration:
 After changing .env, run:
 
 php artisan config:clear
+
+System Health shows system status checks, environment information, writable
+paths, important table/column readiness checks, and configuration warnings
+where permitted.
 
 
 21. Profile
@@ -854,7 +888,6 @@ Available tasks can include:
 - Publish Results
 - Promote Students
 - Publish Notices
-- Reset Demo Data
 
 Each automation appears only when the user has one of its required permissions.
 
@@ -1090,9 +1123,6 @@ php artisan migrate
 Seed default data:
 php artisan db:seed
 
-Seed demo data:
-php artisan db:seed --class=Database\\Seeders\\DemoDataSeeder
-
 Clear config:
 php artisan config:clear
 
@@ -1131,7 +1161,6 @@ php artisan serve
   or notices unless you understand the consequences.
 - Prefer deactivate where available.
 - Back up the MySQL database before large imports or destructive changes.
-- Use demo seeders only in local/test environments.
 - Review permissions after creating each operational user.
 - Confirm scope fields when users report missing data.
 
@@ -1214,6 +1243,12 @@ Reports:
 [ ] Hall tickets printed
 [ ] Staff reports checked
 [ ] Activity logs reviewed
+
+System:
+[ ] System Settings reviewed
+[ ] Super Admin/system logo confirmed
+[ ] University logos uploaded from Institution > Universities
+[ ] System Health reviewed
 
 
 End of guide.

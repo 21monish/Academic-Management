@@ -33,7 +33,7 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <div>
         <x-input-label for="phone" value="Phone" />
-        <x-text-input id="phone" name="phone" class="block mt-1 w-full" :value="old('phone', $college?->phone)" />
+        <x-text-input id="phone" name="phone" class="block mt-1 w-full" :value="old('phone', $college?->phone)" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="10 digit phone number" />
         <x-input-error :messages="$errors->get('phone')" class="mt-2" />
     </div>
     <div>

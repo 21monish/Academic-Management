@@ -24,7 +24,7 @@ class UpdateSemesterRequest extends FormRequest
         return [
             'programme_id' => [
                 'required',
-                'exists:programmes,id',
+                'exists:programmes,programme_id',
             ],
 
             'name' => [

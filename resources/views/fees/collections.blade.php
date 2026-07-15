@@ -1,7 +1,6 @@
 <x-app-layout>
     <x-slot name="header"><h2 class="text-xl font-semibold text-slate-900">Fee Collection</h2></x-slot>
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        @include('partials._flash')
         @include('partials._table_filter')
         <div class="mb-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
             <form method="GET" action="{{ route('fees.collections') }}" class="grid grid-cols-1 gap-3 rounded-lg border border-cyan-100 bg-cyan-50 p-4 shadow-sm md:grid-cols-4">

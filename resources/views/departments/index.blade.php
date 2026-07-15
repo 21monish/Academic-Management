@@ -7,10 +7,6 @@
     </x-slot>
 
     <div class="py-8 max-w-6xl mx-auto sm:px-6 lg:px-8">
-        @if (session('status'))
-            <div class="mb-4 p-3 bg-green-100 text-green-800 rounded-md text-sm">{{ session('status') }}</div>
-        @endif
-
         @php($showUniversityFilter = ! ($accessScope['university_id'] ?? auth()->user()?->university_id) && ! ($accessScope['college_id'] ?? auth()->user()?->college_id) && ! ($accessScope['dept_id'] ?? auth()->user()?->dept_id))
         @php($showCollegeFilter = ! ($accessScope['college_id'] ?? auth()->user()?->college_id) && ! ($accessScope['dept_id'] ?? auth()->user()?->dept_id))
 

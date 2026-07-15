@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\User;
+use App\Support\ValidationRules;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -23,13 +24,9 @@ class ProfileUpdateRequest extends FormRequest
                 'max:80',
                 Rule::unique(User::class, 'username')->ignore($this->user()->user_id, 'user_id'),
             ],
-            'name' => ['nullable', 'string', 'max:80'],
+            'name' => ValidationRules::shortText(false, 80),
             'email' => [
-                'required',
-                'string',
-                'lowercase',
-                'email',
-                'max:255',
+                ...ValidationRules::email(true, 150),
                 Rule::unique(User::class, 'email')->ignore($this->user()->user_id, 'user_id'),
             ],
         ];

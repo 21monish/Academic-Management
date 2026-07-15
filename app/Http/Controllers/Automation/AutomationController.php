@@ -22,7 +22,6 @@ use App\Services\AccessScopeService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -125,12 +124,6 @@ class AutomationController extends Controller
                 'permission' => ['notice.update', 'notice.approve'],
                 'tone' => 'slate',
             ],
-            'demo-reset' => [
-                'label' => 'Reset Demo Data',
-                'detail' => 'Run demo cleanup and reseed classes when they exist.',
-                'permission' => ['system_settings.update', 'user.update'],
-                'tone' => 'amber',
-            ],
         ];
     }
 
@@ -149,7 +142,6 @@ class AutomationController extends Controller
             'results' => ['method' => 'publishResults'],
             'promotions' => ['method' => 'promoteStudents'],
             'notices' => ['method' => 'publishNotices'],
-            'demo-reset' => ['method' => 'resetDemoData'],
         ];
     }
 
@@ -572,32 +564,6 @@ class AutomationController extends Controller
             ]);
     }
 
-    private function resetDemoData($user): string
-    {
-        $cleanupSeeder = 'Database\\Seeders\\DemoDataCleanupSeeder';
-        $demoSeeder = 'Database\\Seeders\\DemoDataSeeder';
-        $ran = [];
-
-        if ($this->seederExists('DemoDataCleanupSeeder')) {
-            Artisan::call('db:seed', ['--class' => $cleanupSeeder, '--force' => true]);
-            $ran[] = 'cleanup';
-        }
-
-        if ($this->seederExists('DemoDataSeeder')) {
-            Artisan::call('db:seed', ['--class' => $demoSeeder, '--force' => true]);
-            $ran[] = 'seed';
-        }
-
-        return $ran
-            ? 'demo '.implode(' + ', $ran).' complete'
-            : 'demo seeders not found';
-    }
-
-    private function seederExists(string $classBasename): bool
-    {
-        return File::exists(database_path("seeders/{$classBasename}.php"));
-    }
-
     private function feeReminderNoticeContent($ledgers): string
     {
         $total = (float) $ledgers->sum(fn ($ledger) => $ledger->balance_due ?? max(($ledger->net_payable ?? $ledger->total_amount ?? 0) - ($ledger->amount_paid ?? 0), 0));
@@ -770,7 +736,6 @@ class AutomationController extends Controller
             'results' => 'results',
             'promotions' => 'promotion records',
             'notices' => 'notices',
-            'demo-reset' => 'demo reset',
         ];
 
         return collect($results)

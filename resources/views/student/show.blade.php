@@ -10,10 +10,7 @@
     </x-slot>
 
     <div class="py-8 max-w-6xl mx-auto sm:px-6 lg:px-8">
-        @if (session('status'))
-            <div class="mb-4 p-3 bg-green-100 text-green-800 rounded-md text-sm">{{ session('status') }}</div>
-        @endif
-
+        @php($studentType = $student->student_type ?: (in_array($student->admission_type, ['D2D', 'C2D'], true) ? $student->admission_type : 'Regular'))
         <div class="bg-white shadow-sm rounded-lg border border-gray-100 p-6">
             <div class="flex items-start justify-between gap-4">
                 <div class="flex items-start gap-4">
@@ -33,6 +30,7 @@
                 <div class="text-right">
                     <div class="text-sm text-gray-600">Gender: <span class="font-medium">{{ $student->gender ?? '-' }}</span></div>
                     <div class="text-sm text-gray-600">DOB: <span class="font-medium">{{ $student->dob?->format('d M Y') ?? '-' }}</span></div>
+                    <div class="text-sm text-gray-600">Student Type: <span class="font-medium">{{ $studentType }}</span></div>
                     <div class="text-sm text-gray-600">Admission Type: <span class="font-medium">{{ $student->admission_type ?? '-' }}</span></div>
                 </div>
             </div>
@@ -173,6 +171,11 @@
 
             <div class="bg-white shadow-sm rounded-lg border border-gray-100 p-6">
                 <h3 class="text-base font-semibold text-gray-900">Add Enrollment</h3>
+                @if(in_array($studentType, ['D2D', 'C2D'], true))
+                    <div class="mt-3 rounded-md border border-cyan-100 bg-cyan-50 px-3 py-2 text-xs font-medium text-cyan-800">
+                        {{ $studentType }} student: enroll from Semester 3 or higher.
+                    </div>
+                @endif
                 <form method="POST" action="{{ route('students.enrollments.store', $student) }}" class="mt-4 space-y-4">
                     @csrf
                     <div>
@@ -180,9 +183,12 @@
                         <select id="semester_id" name="semester_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
                             <option value="">Select semester</option>
                             @foreach($semesters as $semester)
-                                <option value="{{ $semester->semester_id }}">Sem {{ $semester->semester_no }}</option>
+                                <option value="{{ $semester->semester_id }}" @disabled(in_array($studentType, ['D2D', 'C2D'], true) && (int) $semester->semester_no < 3)>
+                                    Sem {{ $semester->semester_no }}{{ in_array($studentType, ['D2D', 'C2D'], true) && (int) $semester->semester_no < 3 ? ' - not for '.$studentType : '' }}
+                                </option>
                             @endforeach
                         </select>
+                        <x-input-error :messages="$errors->get('semester_id')" class="mt-2" />
                     </div>
                     <div>
                         <x-input-label for="academic_year_id" value="Academic Year" />

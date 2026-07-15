@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\ValidationRules;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreUniversityRequest extends FormRequest
@@ -21,10 +22,10 @@ class StoreUniversityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:200'],
+            'name' => ValidationRules::shortText(true, 200),
             'address' => ['nullable', 'string'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'email' => ['nullable', 'email', 'max:150'],
+            'phone' => ValidationRules::phone(),
+            'email' => ValidationRules::email(false, 150),
             'website' => ['nullable', 'url', 'max:200'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,svg', 'max:2048'],
             'theme' => ['required', 'in:ocean,royal,forest'],

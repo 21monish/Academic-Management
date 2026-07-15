@@ -26,6 +26,7 @@
         @include('layouts.partials.vite')
     </head>
     <body class="guest-shell font-sans text-gray-900 antialiased">
+            @include('partials._toast')
             <div class="page-enter min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
             <div>
                 <a href="/" class="flex flex-col items-center gap-2">

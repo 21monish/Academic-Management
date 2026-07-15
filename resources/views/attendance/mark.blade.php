@@ -25,19 +25,6 @@
     @endphp
 
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        @include('partials._flash')
-
-        @if($errors->any())
-            <div class="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                <div class="font-semibold">Please fix the following errors:</div>
-                <ul class="mt-2 list-inside list-disc">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
         <div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-4">
             <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:col-span-2">
                 <div class="text-xs font-semibold uppercase text-slate-500">Lecture</div>

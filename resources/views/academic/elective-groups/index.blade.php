@@ -7,7 +7,6 @@
     </x-slot>
 
     <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        @include('partials._flash')
         <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             <table class="min-w-full divide-y divide-slate-200">
                 <thead class="bg-slate-50">

@@ -63,7 +63,7 @@ test('student navigation only shows permitted modules', function () {
         ->assertDontSee('Students')
         ->assertDontSee('Attendance Summary')
         ->assertDontSee('Users')
-        ->assertDontSee('Roles &amp; Permissions', false)
+        ->assertDontSee('Roles')
         ->assertDontSee('Fee Collection');
 });
 
@@ -89,7 +89,7 @@ test('super admin navigation still shows full administration', function () {
         ->get(route('dashboard'))
         ->assertOk()
         ->assertSee('Universities')
-        ->assertSee('Roles &amp; Permissions', false)
+        ->assertSee('Roles')
         ->assertSee('System Settings')
         ->assertSee('System Health')
         ->assertSee('Fee Collection')
@@ -107,7 +107,7 @@ test('limited direct permissions show selected administration modules', function
         ->assertSee('Colleges')
         ->assertSee('Departments')
         ->assertSee('Users')
-        ->assertSee('Roles &amp; Permissions', false)
+        ->assertSee('Roles')
         ->assertSee('Students')
         ->assertSee('Student Reports')
         ->assertDontSee('Universities')
