@@ -68,7 +68,7 @@
         ],
         "app:post-deploy": [
             "@php artisan migrate --force",
-            "@php artisan db:seed --class=RolePermissionSeeder --force",
+            "@php artisan db:seed --force",
             "@php artisan storage:link"
         ],
         "post-autoload-dump": [

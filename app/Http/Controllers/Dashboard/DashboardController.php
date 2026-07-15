@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
+use Throwable;
 
 class DashboardController extends Controller
 {
@@ -62,17 +63,7 @@ class DashboardController extends Controller
                 ->first();
         }
 
-        $payload = Cache::remember(
-            $this->dashboardCacheKey($roleName, $user, $student, $staff),
-            now()->addSeconds(self::DASHBOARD_CACHE_SECONDS),
-            fn () => [
-                'stats' => $this->statsFor($roleName, $user, $student, $staff),
-                'charts' => $this->chartsFor($roleName, $user),
-                'analytics' => $this->analytics($user),
-                'recentActivity' => $this->recentActivity($roleName),
-                'dashboardData' => $this->dashboardData($roleName, $user, $student, $staff),
-            ]
-        );
+        $payload = $this->rememberDashboardPayload($roleName, $user, $student, $staff);
 
         return view('dashboard.index', [
             'roleName' => $roleName,
@@ -104,6 +95,32 @@ class DashboardController extends Controller
         ];
 
         return 'dashboard:payload:v2:'.md5(json_encode($scopeFingerprint));
+    }
+
+    private function rememberDashboardPayload(string $roleName, ?User $user, ?Student $student, ?Staff $staff): array
+    {
+        $resolver = fn () => $this->dashboardPayload($roleName, $user, $student, $staff);
+
+        try {
+            return Cache::remember(
+                $this->dashboardCacheKey($roleName, $user, $student, $staff),
+                now()->addSeconds(self::DASHBOARD_CACHE_SECONDS),
+                $resolver
+            );
+        } catch (Throwable) {
+            return $resolver();
+        }
+    }
+
+    private function dashboardPayload(string $roleName, ?User $user, ?Student $student, ?Staff $staff): array
+    {
+        return [
+            'stats' => $this->statsFor($roleName, $user, $student, $staff),
+            'charts' => $this->chartsFor($roleName, $user),
+            'analytics' => $this->analytics($user),
+            'recentActivity' => $this->recentActivity($roleName),
+            'dashboardData' => $this->dashboardData($roleName, $user, $student, $staff),
+        ];
     }
 
     private function pageSections(): array

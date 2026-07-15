@@ -47,13 +47,23 @@ Artisan::command('app:readiness-check', function () {
         $add('Database connection', false, $exception->getMessage());
     }
 
+    if (config('cache.default') === 'database') {
+        $cacheTable = config('cache.stores.database.table', 'cache');
+        $add("Database cache table [{$cacheTable}]", Schema::hasTable($cacheTable), 'Run php artisan migrate --force.');
+    }
+
+    if (config('session.driver') === 'database') {
+        $sessionTable = config('session.table', 'sessions');
+        $add("Database session table [{$sessionTable}]", Schema::hasTable($sessionTable), 'Run php artisan migrate --force.');
+    }
+
     $systemRoles = ['Super Admin', 'Admin', 'Student'];
     $rolesReady = Schema::hasTable('user_roles')
         && Schema::hasTable('permissions')
         && DB::table('user_roles')->where('is_system_role', true)->whereIn('role_name', $systemRoles)->count() === count($systemRoles)
         && DB::table('user_roles')->where('is_system_role', true)->whereNotIn('role_name', $systemRoles)->doesntExist()
         && DB::table('permissions')->count() > 0;
-    $add('Default roles and permissions', $rolesReady, 'Run php artisan db:seed --class=RolePermissionSeeder.');
+    $add('Default roles and permissions', $rolesReady, 'Run php artisan db:seed --force.');
 
     $failed = collect($checks)->where('ok', false);
 
