@@ -1,4 +1,5 @@
 *.log
+*.zip
 .DS_Store
 .env
 .env.backup
@@ -16,6 +17,12 @@
 /public/build
 /public/hot
 /public/storage
+/public/uploads/logos/*
+/public/uploads/notices/*
+/public/uploads/photos/*
+!/public/uploads/logos/.gitkeep
+!/public/uploads/notices/.gitkeep
+!/public/uploads/photos/.gitkeep
 /storage/*.key
 /storage/pail
 /vendor

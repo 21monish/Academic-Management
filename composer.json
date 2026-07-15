@@ -61,6 +61,16 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "app:cache": [
+            "@php artisan config:cache",
+            "@php artisan route:cache",
+            "@php artisan view:cache"
+        ],
+        "app:post-deploy": [
+            "@php artisan migrate --force",
+            "@php artisan db:seed --class=RolePermissionSeeder --force",
+            "@php artisan storage:link"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"

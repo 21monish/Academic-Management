@@ -80,3 +80,27 @@ System health checks are available inside the application at:
 ## Documentation
 
 See `APPLICATION_USER_GUIDE.txt` for the full user-facing guide and module walkthrough.
+
+## Sevalla Deployment
+
+This repo is ready for Sevalla Git deployment.
+
+Use:
+
+```bash
+composer install --no-dev --optimize-autoloader --no-interaction && npm ci && npm run build && composer run app:cache
+```
+
+Start command:
+
+```bash
+php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+```
+
+After first deploy:
+
+```bash
+composer run app:post-deploy
+```
+
+Copy `.env.sevalla.example` into Sevalla environment variables and fill in the real database and app URL values. See `docs/DEPLOYMENT.md` for the full checklist.
