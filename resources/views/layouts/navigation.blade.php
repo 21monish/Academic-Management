@@ -3,7 +3,11 @@
     $mustChangePassword = $user?->must_change_password;
     $roleName = $user?->role?->role_name ?? 'User';
     $isSuperAdmin = strcasecmp($roleName, 'Super Admin') === 0;
-    $user?->loadMissing('university');
+    try {
+        $user?->loadMissing('university');
+    } catch (\Throwable $exception) {
+        report($exception);
+    }
     $systemBranding = app(\App\Services\SystemSettingService::class)->branding();
     $brandUniversity = $isSuperAdmin ? null : $user?->university;
     $brandName = $brandUniversity?->name ?? $systemBranding['application_name'];

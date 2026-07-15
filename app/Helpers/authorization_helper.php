@@ -3,6 +3,7 @@
 use App\Models\Permission;
 use App\Services\AccessScopeService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 if (! function_exists('hasPermission')) {
     /**
@@ -21,12 +22,22 @@ if (! function_exists('hasPermission')) {
         [$module, $action] = normalizePermissionParts($permissionSlug);
         $modules = permissionModuleAliases($module);
 
-        return Permission::whereIn('module_name', $modules)
-            ->where('action', $action)
-            ->whereHas('users', function ($q) use ($user) {
-                $q->where('users.user_id', $user->user_id);
-            })
-            ->exists();
+        try {
+            if (! Schema::hasTable('permissions') || ! Schema::hasTable('user_permissions')) {
+                return false;
+            }
+
+            return Permission::whereIn('module_name', $modules)
+                ->where('action', $action)
+                ->whereHas('users', function ($q) use ($user) {
+                    $q->where('users.user_id', $user->user_id);
+                })
+                ->exists();
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return false;
+        }
     }
 }
 
@@ -133,6 +144,12 @@ if (! function_exists('currentAccessScope')) {
             return session('access_scope', []);
         }
 
-        return app(AccessScopeService::class)->forUser($user);
+        try {
+            return app(AccessScopeService::class)->forUser($user);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return session('access_scope', []);
+        }
     }
 }

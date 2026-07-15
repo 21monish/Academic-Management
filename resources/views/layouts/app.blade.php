@@ -3,7 +3,11 @@
     $themeUser = auth()->user();
     $themeRoleName = $themeUser?->role?->role_name ?? 'User';
     $themeIsSuperAdmin = strcasecmp($themeRoleName, 'Super Admin') === 0;
-    $themeUser?->loadMissing('university');
+    try {
+        $themeUser?->loadMissing('university');
+    } catch (\Throwable $exception) {
+        report($exception);
+    }
     $universityTheme = ! $themeIsSuperAdmin && in_array($themeUser?->university?->theme, ['ocean', 'royal', 'forest'], true)
         ? $themeUser->university->theme
         : 'ocean';

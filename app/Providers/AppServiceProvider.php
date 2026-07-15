@@ -5,8 +5,10 @@ namespace App\Providers;
 use App\Models\Permission;
 use Illuminate\Foundation\Vite;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Throwable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -97,10 +99,20 @@ class AppServiceProvider extends ServiceProvider
         [$module, $action] = normalizePermissionParts($ability);
         $modules = permissionModuleAliases($module);
 
-        return Permission::query()
-            ->whereIn('module_name', $modules)
-            ->where('action', $action)
-            ->whereHas('users', fn ($query) => $query->where('users.user_id', $user->user_id))
-            ->exists();
+        try {
+            if (! Schema::hasTable('permissions') || ! Schema::hasTable('user_permissions')) {
+                return false;
+            }
+
+            return Permission::query()
+                ->whereIn('module_name', $modules)
+                ->where('action', $action)
+                ->whereHas('users', fn ($query) => $query->where('users.user_id', $user->user_id))
+                ->exists();
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return false;
+        }
     }
 }

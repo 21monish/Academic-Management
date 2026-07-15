@@ -3,7 +3,11 @@
     $chatbotUser = auth()->user();
     $chatbotRoleName = $chatbotUser?->role?->role_name ?? 'User';
     $chatbotIsSuperAdmin = strcasecmp($chatbotRoleName, 'Super Admin') === 0;
-    $chatbotUser?->loadMissing('university');
+    try {
+        $chatbotUser?->loadMissing('university');
+    } catch (\Throwable $exception) {
+        report($exception);
+    }
     $chatbotUniversity = $chatbotIsSuperAdmin ? null : $chatbotUser?->university;
     $chatbotBrandName = $chatbotUniversity?->name ?? $chatbotBranding['application_name'];
     $chatbotLogoUrl = $chatbotUniversity?->logo_url

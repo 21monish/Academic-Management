@@ -107,8 +107,16 @@ class DashboardController extends Controller
                 now()->addSeconds(self::DASHBOARD_CACHE_SECONDS),
                 $resolver
             );
-        } catch (Throwable) {
-            return $resolver();
+        } catch (Throwable $exception) {
+            report($exception);
+
+            try {
+                return $resolver();
+            } catch (Throwable $payloadException) {
+                report($payloadException);
+
+                return $this->fallbackDashboardPayload($roleName);
+            }
         }
     }
 
@@ -120,6 +128,23 @@ class DashboardController extends Controller
             'analytics' => $this->analytics($user),
             'recentActivity' => $this->recentActivity($roleName),
             'dashboardData' => $this->dashboardData($roleName, $user, $student, $staff),
+        ];
+    }
+
+    private function fallbackDashboardPayload(string $roleName): array
+    {
+        return [
+            'stats' => [],
+            'charts' => [],
+            'analytics' => [
+                'cards' => [],
+                'charts' => [],
+            ],
+            'recentActivity' => collect(),
+            'dashboardData' => [
+                'quickLinks' => $this->quickLinks($roleName),
+                'notices' => collect(),
+            ],
         ];
     }
 
