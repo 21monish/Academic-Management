@@ -27,45 +27,31 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 class DashboardController extends Controller
 {
     private const DASHBOARD_CACHE_SECONDS = 120;
 
-    public function __invoke(Request $request): View
+    public function __invoke(Request $request): Response
+    {
+        try {
+            return $this->renderDashboard($request);
+        } catch (Throwable $exception) {
+            return $this->fallbackDashboardResponse($request, $exception);
+        }
+    }
+
+    private function renderDashboard(Request $request): Response
     {
         $user = $request->user();
         $roleName = $user?->role?->role_name ?? 'User';
-        $student = null;
-        $staff = null;
-
-        if ($roleName === 'Student') {
-            $student = Student::query()
-                ->with(['college', 'programme', 'category', 'enrollments.semester', 'enrollments.academicYear'])
-                ->where(function ($query) use ($request) {
-                    $query->whereHas('userAccount', fn ($sub) => $sub->where('users.user_id', $request->user()?->user_id))
-                        ->orWhere('email', $request->user()?->email);
-                })
-                ->first();
-        }
-
-        if (in_array($roleName, ['Teaching Staff', 'Non-Teaching Staff', 'HOD'], true)) {
-            $staff = Staff::query()
-                ->where(function ($query) use ($user) {
-                    $query->where('email', $user?->email)
-                        ->orWhereIn('staff_id', User::query()
-                            ->where('reference_type', 'Staff')
-                            ->where('user_id', $user?->user_id)
-                            ->select('reference_id'));
-                })
-                ->first();
-        }
-
+        $student = $this->studentForDashboard($request);
+        $staff = $this->staffForDashboard($user, $roleName);
         $payload = $this->rememberDashboardPayload($roleName, $user, $student, $staff);
 
-        return view('dashboard.index', [
+        $html = view('dashboard.index', [
             'roleName' => $roleName,
             'stats' => $payload['stats'],
             'charts' => $payload['charts'],
@@ -75,7 +61,86 @@ class DashboardController extends Controller
             'staff' => $staff,
             'dashboardData' => $payload['dashboardData'],
             'pageSections' => $this->pageSections(),
-        ]);
+        ])->render();
+
+        return response($html);
+    }
+
+    private function studentForDashboard(Request $request): ?Student
+    {
+        if (($request->user()?->role?->role_name ?? 'User') !== 'Student') {
+            return null;
+        }
+
+        return Student::query()
+            ->with(['college', 'programme', 'category', 'enrollments.semester', 'enrollments.academicYear'])
+            ->where(function ($query) use ($request) {
+                $query->whereHas('userAccount', fn ($sub) => $sub->where('users.user_id', $request->user()?->user_id))
+                    ->orWhere('email', $request->user()?->email);
+            })
+            ->first();
+    }
+
+    private function staffForDashboard(?User $user, string $roleName): ?Staff
+    {
+        if (! in_array($roleName, ['Teaching Staff', 'Non-Teaching Staff', 'HOD'], true)) {
+            return null;
+        }
+
+        return Staff::query()
+            ->where(function ($query) use ($user) {
+                $query->where('email', $user?->email)
+                    ->orWhereIn('staff_id', User::query()
+                        ->where('reference_type', 'Staff')
+                        ->where('user_id', $user?->user_id)
+                        ->select('reference_id'));
+            })
+            ->first();
+    }
+
+    private function fallbackDashboardResponse(Request $request, Throwable $exception): Response
+    {
+        report($exception);
+
+        try {
+            return response()->view('dashboard.fallback', [
+                'roleName' => $request->user()?->role?->role_name ?? 'User',
+                'user' => $request->user(),
+                'pageSections' => $this->pageSections(),
+            ]);
+        } catch (Throwable $fallbackException) {
+            report($fallbackException);
+
+            $dashboardTitle = e(($request->user()?->role?->role_name ?? 'User').' Dashboard');
+
+            return response(<<<HTML
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{$dashboardTitle}</title>
+    <style>
+        body{margin:0;font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a}
+        main{min-height:100vh;display:grid;place-items:center;padding:24px}
+        section{max-width:560px;border:1px solid #e2e8f0;background:#fff;border-radius:12px;padding:28px;box-shadow:0 10px 30px rgba(15,23,42,.08)}
+        h1{margin:0 0 8px;font-size:26px}
+        p{line-height:1.6;color:#475569}
+        a{display:inline-block;margin-top:16px;border-radius:8px;background:#0e7490;color:#fff;padding:10px 14px;text-decoration:none;font-weight:700}
+    </style>
+</head>
+<body>
+    <main>
+        <section>
+            <h1>{$dashboardTitle}</h1>
+            <p>The advanced dashboard could not load, so this safe dashboard is active. Other modules are still available from their direct URLs.</p>
+            <a href="/change-password">Account Settings</a>
+        </section>
+    </main>
+</body>
+</html>
+HTML);
+        }
     }
 
     private function dashboardCacheKey(string $roleName, ?User $user, ?Student $student, ?Staff $staff): string
