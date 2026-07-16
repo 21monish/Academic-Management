@@ -23,6 +23,7 @@ class LicenseService
         'user' => 'institution',
         'user_permission' => 'institution',
         'role' => 'institution',
+        'approval_request' => 'system',
         'license_plan' => 'system',
         'system_settings' => 'system',
         'system_health' => 'system',

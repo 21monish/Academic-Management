@@ -31,9 +31,9 @@ require __DIR__.'/users.php';
 require __DIR__.'/chatbot.php';
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/approvals', [ApprovalController::class, 'index'])->name('approvals.index');
-    Route::patch('/approvals/{approval}/approve', [ApprovalController::class, 'approve'])->name('approvals.approve');
-    Route::patch('/approvals/{approval}/reject', [ApprovalController::class, 'reject'])->name('approvals.reject');
+    Route::get('/approvals', [ApprovalController::class, 'index'])->middleware('permission:approval_request.view')->name('approvals.index');
+    Route::patch('/approvals/{approval}/approve', [ApprovalController::class, 'approve'])->middleware('permission:approval_request.approve')->name('approvals.approve');
+    Route::patch('/approvals/{approval}/reject', [ApprovalController::class, 'reject'])->middleware('permission:approval_request.approve')->name('approvals.reject');
 
     Route::post('/automations/{task}', [AutomationController::class, 'run'])->name('automations.run');
 

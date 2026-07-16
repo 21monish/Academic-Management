@@ -148,7 +148,7 @@
                 ['label' => 'Activity Logs', 'route' => 'reports.activity', 'active' => 'reports.activity', 'icon' => 'chart', 'permission' => 'activity_log.view'],
             ],
             'System' => [
-                ['label' => 'Approval Requests', 'route' => 'approvals.index', 'active' => 'approvals.*', 'icon' => 'check', 'permission' => ['user.delete', 'student.delete', 'concession.approve', 'result.approve']],
+                ['label' => 'Approval Requests', 'route' => 'approvals.index', 'active' => 'approvals.*', 'icon' => 'check', 'permission' => 'approval_request.view'],
                 ['label' => 'Manage Plans', 'route' => 'system.plans.index', 'active' => 'system.plans.*', 'icon' => 'tag', 'permission' => 'license_plan.view'],
                 ['label' => 'System Settings', 'route' => 'system.settings', 'active' => 'system.settings*', 'icon' => 'settings', 'permission' => 'system_settings.view'],
                 ['label' => 'System Health', 'route' => 'system.health', 'active' => 'system.health', 'icon' => 'shield', 'permission' => 'system_health.view'],

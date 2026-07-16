@@ -75,6 +75,8 @@ class AppServiceProvider extends ServiceProvider
             'notice.view',
             'notice.create',
             'report.view',
+            'approval_request.view',
+            'approval_request.approve',
             'certificate.view',
             'certificate.generate',
         ];

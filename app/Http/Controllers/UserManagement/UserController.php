@@ -272,7 +272,7 @@ class UserController extends Controller
             'Leave' => ['leave_type', 'leave_balance', 'leave_application', 'leave_approval', 'leave_cancellation', 'leave_substitute', 'holiday'],
             'Notices' => ['notice_category', 'notice', 'notice_audience', 'notice_attachment', 'notice_acknowledgement'],
             'Reports' => ['student_report', 'attendance_report', 'result_card', 'fee_receipt_report', 'hall_ticket_report', 'staff_report', 'activity_log', 'certificate'],
-            'System' => ['license_plan', 'system_settings', 'system_health'],
+            'System' => ['approval_request', 'license_plan', 'system_settings', 'system_health'],
         ];
 
         return collect($sections)->map(function (array $modules) use ($permissions) {

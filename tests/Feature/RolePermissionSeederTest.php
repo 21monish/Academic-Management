@@ -27,6 +27,8 @@ test('default roles receive expected permissions', function () {
     expect($admin->permissions()->where('module_name', 'certificate')->where('action', 'view')->exists())->toBeTrue();
     expect($admin->permissions()->where('module_name', 'certificate')->where('action', 'generate')->exists())->toBeTrue();
     expect($admin->permissions()->where('module_name', 'system_health')->where('action', 'view')->exists())->toBeTrue();
+    expect($admin->permissions()->where('module_name', 'approval_request')->where('action', 'view')->exists())->toBeTrue();
+    expect($admin->permissions()->where('module_name', 'approval_request')->where('action', 'approve')->exists())->toBeTrue();
     expect($admin->permissions()->where('module_name', 'license_plan')->exists())->toBeFalse();
     expect($student->permissions()->where('module_name', 'notice')->where('action', 'view')->exists())->toBeTrue();
     expect($student->permissions()->where('module_name', 'attendance_summary')->where('action', 'view')->exists())->toBeTrue();
@@ -154,6 +156,7 @@ test('user permission updater exposes every page wise permission module', functi
         'staff_report',
         'activity_log',
         'certificate',
+        'approval_request',
         'license_plan',
         'system_settings',
         'system_health',

@@ -28,6 +28,10 @@
             'view' => 'View Permissions',
             'update' => 'Update Permissions',
         ],
+        'approval_request' => [
+            'view' => 'View Requests',
+            'approve' => 'Approve / Reject',
+        ],
         'certificate' => [
             'view' => 'View Certificates',
             'generate' => 'Generate / Print',
@@ -100,6 +104,7 @@
         'hall_ticket_report' => 'Hall Ticket PDF',
         'staff_report' => 'Staff Reports',
         'activity_log' => 'Activity Logs',
+        'approval_request' => 'Approval Requests',
         'license_plan' => 'Manage Plans',
         'system_settings' => 'System Settings',
         'system_health' => 'System Health',
@@ -118,6 +123,7 @@
         'fee_receipt_report' => 'fee receipt report fee receipts reports',
         'hall_ticket_report' => 'hall ticket report hall ticket pdf reports',
         'staff_report' => 'staff report staff reports reports',
+        'approval_request' => 'approval approvals approval requests approve reject workflow',
         'license_plan' => 'plans subscription license licensing feature lock pricing clients',
         'system_settings' => 'settings setting system setting system settings',
         'system_health' => 'system health health',
