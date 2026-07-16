@@ -127,6 +127,7 @@ if (! function_exists('permissionModuleAliases')) {
             'staff_report' => ['staff_report', 'reports'],
             'activity_log' => ['activity_log', 'reports'],
             'certificate' => ['certificate', 'reports'],
+            'license_plan' => ['license_plan'],
             'system_settings' => ['system_settings', 'user_management'],
             'system_health' => ['system_health', 'user_management'],
             'dashboard' => ['dashboard'],

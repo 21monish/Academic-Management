@@ -24,7 +24,7 @@ Route::middleware(['auth'])->prefix('reports')->name('reports.')->group(function
     Route::get('certificates', [ReportsController::class, 'certificates'])->middleware('permission:certificate.view')->name('certificates');
     Route::get('certificates/{student}/{type}', [ReportsController::class, 'certificatePrint'])
         ->where('type', 'bonafide|leaving|fee|transfer')
-        ->middleware('permission:certificate.view')
+        ->middleware('permission:certificate.generate')
         ->name('certificates.print');
 
     Route::get('activity', [ReportsController::class, 'activity'])->middleware('permission:activity_log.view')->name('activity');

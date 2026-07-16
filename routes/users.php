@@ -41,9 +41,9 @@ Route::put('/system/settings', [SystemSettingsController::class, 'update'])
     ->middleware(['auth', 'permission:system_settings.update'])
     ->name('system.settings.update');
 
-Route::middleware(['auth', 'permission:system_settings.view'])->prefix('/system/plans')->name('system.plans.')->group(function () {
+Route::middleware(['auth', 'permission:license_plan.view'])->prefix('/system/plans')->name('system.plans.')->group(function () {
     Route::get('/', [LicensePlanController::class, 'index'])->name('index');
-    Route::post('/', [LicensePlanController::class, 'store'])->middleware('permission:system_settings.update')->name('store');
-    Route::put('/{plan}', [LicensePlanController::class, 'update'])->middleware('permission:system_settings.update')->name('update');
-    Route::delete('/{plan}', [LicensePlanController::class, 'destroy'])->middleware('permission:system_settings.delete')->name('destroy');
+    Route::post('/', [LicensePlanController::class, 'store'])->middleware('permission:license_plan.create')->name('store');
+    Route::put('/{plan}', [LicensePlanController::class, 'update'])->middleware('permission:license_plan.update')->name('update');
+    Route::delete('/{plan}', [LicensePlanController::class, 'destroy'])->middleware('permission:license_plan.delete')->name('destroy');
 });

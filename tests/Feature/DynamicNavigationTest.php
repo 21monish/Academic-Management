@@ -90,6 +90,7 @@ test('super admin navigation still shows full administration', function () {
         ->assertOk()
         ->assertSee('Universities')
         ->assertSee('Roles')
+        ->assertSee('Manage Plans')
         ->assertSee('System Settings')
         ->assertSee('System Health')
         ->assertSee('Fee Collection')
@@ -111,6 +112,7 @@ test('limited direct permissions show selected administration modules', function
         ->assertSee('Students')
         ->assertSee('Student Reports')
         ->assertDontSee('Universities')
+        ->assertDontSee('Manage Plans')
         ->assertDontSee('System Settings')
         ->assertDontSee('System Health');
 });

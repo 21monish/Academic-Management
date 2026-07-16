@@ -1,4 +1,6 @@
 <x-app-layout>
+    @php($canGenerateCertificates = hasPermission('certificate.generate'))
+
     <x-slot name="header">
         <h2 class="text-xl font-semibold text-slate-900">Certificates</h2>
     </x-slot>
@@ -29,13 +31,17 @@
                             <td class="px-4 py-3">{{ $student->programme?->name ?? '-' }}</td>
                             <td class="px-4 py-3">{{ $currentEnrollment?->semester ? 'Sem '.$currentEnrollment->semester->semester_no : '-' }}</td>
                             <td class="px-4 py-3">
-                                <div class="flex flex-wrap gap-2">
-                                    @foreach (['bonafide' => 'Bonafide', 'leaving' => 'Leaving', 'fee' => 'Fee', 'transfer' => 'Transfer'] as $type => $label)
-                                        <a href="{{ route('reports.certificates.print', [$student, $type]) }}" class="rounded-md bg-cyan-50 px-2.5 py-1 text-xs font-bold text-cyan-700 ring-1 ring-cyan-100 hover:bg-cyan-100">
-                                            {{ $label }}
-                                        </a>
-                                    @endforeach
-                                </div>
+                                @if($canGenerateCertificates)
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach (['bonafide' => 'Bonafide', 'leaving' => 'Leaving', 'fee' => 'Fee', 'transfer' => 'Transfer'] as $type => $label)
+                                            <a href="{{ route('reports.certificates.print', [$student, $type]) }}" class="rounded-md bg-cyan-50 px-2.5 py-1 text-xs font-bold text-cyan-700 ring-1 ring-cyan-100 hover:bg-cyan-100">
+                                                {{ $label }}
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <span class="text-xs font-semibold text-slate-400">No print permission</span>
+                                @endif
                             </td>
                         </tr>
                     @empty

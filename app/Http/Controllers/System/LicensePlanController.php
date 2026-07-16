@@ -37,8 +37,9 @@ class LicensePlanController extends Controller
                 ->orderBy('name')
                 ->get(),
             'features' => self::FEATURES,
-            'canUpdate' => hasPermission('system_settings.update'),
-            'canDelete' => hasPermission('system_settings.delete'),
+            'canCreate' => hasPermission('license_plan.create'),
+            'canUpdate' => hasPermission('license_plan.update'),
+            'canDelete' => hasPermission('license_plan.delete'),
         ]);
     }
 

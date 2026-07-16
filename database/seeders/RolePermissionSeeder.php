@@ -70,7 +70,7 @@ class RolePermissionSeeder extends Seeder
             'notice_category', 'notice', 'notice_audience', 'notice_attachment', 'notice_acknowledgement',
             'student_report', 'attendance_report', 'result_card', 'fee_receipt_report',
             'hall_ticket_report', 'staff_report', 'activity_log', 'certificate',
-            'system_settings', 'system_health',
+            'license_plan', 'system_settings', 'system_health',
             // Legacy broad modules kept for old routes/users during transition.
             'institution', 'academic', 'timetable', 'attendance', 'user_management',
             'theory_exam', 'practical_exam', 'fees', 'leave', 'reports',
@@ -83,7 +83,8 @@ class RolePermissionSeeder extends Seeder
             'password_change' => ['view', 'update'],
             'chatbot' => ['ask', 'teach'],
             'user_permission' => ['view', 'update'],
-            'certificate' => ['view'],
+            'certificate' => ['view', 'generate'],
+            'license_plan' => ['view', 'create', 'update', 'delete'],
         ];
 
         foreach ($modules as $module) {
@@ -180,7 +181,7 @@ class RolePermissionSeeder extends Seeder
                 'hall_ticket_report' => ['view'],
                 'staff_report' => ['view'],
                 'activity_log' => ['view'],
-                'certificate' => ['view'],
+                'certificate' => ['view', 'generate'],
                 'system_settings' => ['view', 'update'],
                 'system_health' => ['view'],
                 'user_management' => ['view', 'create', 'update'],

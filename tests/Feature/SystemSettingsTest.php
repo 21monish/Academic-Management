@@ -94,5 +94,6 @@ test('system settings navigation follows direct page permission', function () {
         ->get(route('dashboard'))
         ->assertOk()
         ->assertSee('System Settings')
+        ->assertDontSee('Manage Plans')
         ->assertDontSee('System Health');
 });

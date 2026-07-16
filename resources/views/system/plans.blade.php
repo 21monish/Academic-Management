@@ -43,22 +43,22 @@
                 <div class="grid gap-4 lg:grid-cols-4">
                     <div>
                         <x-input-label for="code" value="Plan Code" />
-                        <input id="code" name="code" type="text" class="mt-1 block w-full rounded-md border-2 border-slate-300 px-3 py-2 text-sm font-semibold shadow-sm focus:border-cyan-600 focus:ring-cyan-600" value="{{ old('code') }}" placeholder="basic" required @disabled(! $canUpdate)>
+                        <input id="code" name="code" type="text" class="mt-1 block w-full rounded-md border-2 border-slate-300 px-3 py-2 text-sm font-semibold shadow-sm focus:border-cyan-600 focus:ring-cyan-600" value="{{ old('code') }}" placeholder="basic" required @disabled(! $canCreate)>
                         <x-input-error :messages="$errors->get('code')" class="mt-2" />
                     </div>
                     <div>
                         <x-input-label for="name" value="Plan Name" />
-                        <input id="name" name="name" type="text" class="mt-1 block w-full rounded-md border-2 border-slate-300 px-3 py-2 text-sm font-semibold shadow-sm focus:border-cyan-600 focus:ring-cyan-600" value="{{ old('name') }}" placeholder="Basic" required @disabled(! $canUpdate)>
+                        <input id="name" name="name" type="text" class="mt-1 block w-full rounded-md border-2 border-slate-300 px-3 py-2 text-sm font-semibold shadow-sm focus:border-cyan-600 focus:ring-cyan-600" value="{{ old('name') }}" placeholder="Basic" required @disabled(! $canCreate)>
                         <x-input-error :messages="$errors->get('name')" class="mt-2" />
                     </div>
                     <div>
                         <x-input-label for="monthly_price" value="Monthly Price" />
-                        <input id="monthly_price" name="monthly_price" type="number" min="0" step="0.01" class="mt-1 block w-full rounded-md border-2 border-slate-300 px-3 py-2 text-sm font-semibold shadow-sm focus:border-cyan-600 focus:ring-cyan-600" value="{{ old('monthly_price') }}" placeholder="2999" required @disabled(! $canUpdate)>
+                        <input id="monthly_price" name="monthly_price" type="number" min="0" step="0.01" class="mt-1 block w-full rounded-md border-2 border-slate-300 px-3 py-2 text-sm font-semibold shadow-sm focus:border-cyan-600 focus:ring-cyan-600" value="{{ old('monthly_price') }}" placeholder="2999" required @disabled(! $canCreate)>
                         <x-input-error :messages="$errors->get('monthly_price')" class="mt-2" />
                     </div>
                     <div>
                         <x-input-label for="max_students" value="Max Students" />
-                        <input id="max_students" name="max_students" type="number" min="1" step="1" class="mt-1 block w-full rounded-md border-2 border-slate-300 px-3 py-2 text-sm font-semibold shadow-sm focus:border-cyan-600 focus:ring-cyan-600" value="{{ old('max_students') }}" placeholder="Leave blank for unlimited" @disabled(! $canUpdate)>
+                        <input id="max_students" name="max_students" type="number" min="1" step="1" class="mt-1 block w-full rounded-md border-2 border-slate-300 px-3 py-2 text-sm font-semibold shadow-sm focus:border-cyan-600 focus:ring-cyan-600" value="{{ old('max_students') }}" placeholder="Leave blank for unlimited" @disabled(! $canCreate)>
                         <x-input-error :messages="$errors->get('max_students')" class="mt-2" />
                     </div>
                 </div>
@@ -68,7 +68,7 @@
                     <div class="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                         @foreach($features as $key => $label)
                             <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 transition hover:border-cyan-200 hover:bg-cyan-50">
-                                <input type="checkbox" name="features[]" value="{{ $key }}" class="mt-1 rounded border-slate-300 text-cyan-700 focus:ring-cyan-600" @checked(in_array($key, old('features', []), true)) @disabled(! $canUpdate)>
+                                <input type="checkbox" name="features[]" value="{{ $key }}" class="mt-1 rounded border-slate-300 text-cyan-700 focus:ring-cyan-600" @checked(in_array($key, old('features', []), true)) @disabled(! $canCreate)>
                                 <span>
                                     <span class="block text-sm font-black text-slate-900">{{ $label }}</span>
                                     <span class="mt-1 block text-xs font-semibold leading-5 text-slate-500">{{ $featureDescriptions[$key] ?? '' }}</span>
@@ -82,14 +82,14 @@
 
                 <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
                     <label class="inline-flex items-center gap-2 text-sm font-bold text-slate-700">
-                        <input type="checkbox" name="is_active" value="1" class="rounded border-slate-300 text-cyan-700 focus:ring-cyan-600" checked @disabled(! $canUpdate)>
+                        <input type="checkbox" name="is_active" value="1" class="rounded border-slate-300 text-cyan-700 focus:ring-cyan-600" checked @disabled(! $canCreate)>
                         Active plan
                     </label>
 
-                    @if($canUpdate)
+                    @if($canCreate)
                         <button type="submit" class="rounded-lg bg-cyan-700 px-4 py-2 text-sm font-black text-white shadow-sm hover:bg-cyan-800">Create Plan</button>
                     @else
-                        <p class="text-sm font-semibold text-slate-500">You can view plans, but you do not have update permission.</p>
+                        <p class="text-sm font-semibold text-slate-500">You can view plans, but you do not have create permission.</p>
                     @endif
                 </div>
             </form>

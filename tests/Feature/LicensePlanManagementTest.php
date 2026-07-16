@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\LicensePlan;
+use App\Models\Permission;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Models\University;
@@ -89,4 +90,51 @@ test('assigned subscription plan cannot be deleted', function () {
         ->assertSessionHas('error');
 
     expect(LicensePlan::query()->whereKey($plan->plan_id)->exists())->toBeTrue();
+});
+
+test('plan management uses dedicated user permissions', function () {
+    $this->seed(RolePermissionSeeder::class);
+
+    $viewOnlyUser = User::factory()->create(['role_id' => null]);
+    $systemSettingsView = Permission::where('module_name', 'system_settings')->where('action', 'view')->firstOrFail();
+    $licensePlanView = Permission::where('module_name', 'license_plan')->where('action', 'view')->firstOrFail();
+    $licensePlanCreate = Permission::where('module_name', 'license_plan')->where('action', 'create')->firstOrFail();
+
+    $viewOnlyUser->permissions()->sync([$systemSettingsView->permission_id]);
+
+    $this->actingAs($viewOnlyUser)
+        ->get(route('system.plans.index'))
+        ->assertForbidden();
+
+    $viewOnlyUser->permissions()->sync([$licensePlanView->permission_id]);
+
+    $this->actingAs($viewOnlyUser)
+        ->get(route('system.plans.index'))
+        ->assertOk()
+        ->assertSee('Manage Plans')
+        ->assertDontSee('Create Plan</button>', false);
+
+    $this->actingAs($viewOnlyUser)
+        ->post(route('system.plans.store'), [
+            'code' => 'blocked',
+            'name' => 'Blocked',
+            'monthly_price' => '1000',
+            'features' => ['core'],
+            'is_active' => '1',
+        ])
+        ->assertForbidden();
+
+    $viewOnlyUser->permissions()->sync([$licensePlanView->permission_id, $licensePlanCreate->permission_id]);
+
+    $this->actingAs($viewOnlyUser)
+        ->post(route('system.plans.store'), [
+            'code' => 'allowed',
+            'name' => 'Allowed',
+            'monthly_price' => '1000',
+            'features' => ['core'],
+            'is_active' => '1',
+        ])
+        ->assertRedirect(route('system.plans.index'));
+
+    expect(LicensePlan::query()->where('code', 'allowed')->exists())->toBeTrue();
 });

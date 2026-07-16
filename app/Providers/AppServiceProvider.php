@@ -76,6 +76,7 @@ class AppServiceProvider extends ServiceProvider
             'notice.create',
             'report.view',
             'certificate.view',
+            'certificate.generate',
         ];
 
         foreach ($moduleAbilities as $ability) {

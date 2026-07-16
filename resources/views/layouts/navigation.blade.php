@@ -149,7 +149,7 @@
             ],
             'System' => [
                 ['label' => 'Approval Requests', 'route' => 'approvals.index', 'active' => 'approvals.*', 'icon' => 'check', 'permission' => ['user.delete', 'student.delete', 'concession.approve', 'result.approve']],
-                ['label' => 'Manage Plans', 'route' => 'system.plans.index', 'active' => 'system.plans.*', 'icon' => 'tag', 'permission' => 'system_settings.view'],
+                ['label' => 'Manage Plans', 'route' => 'system.plans.index', 'active' => 'system.plans.*', 'icon' => 'tag', 'permission' => 'license_plan.view'],
                 ['label' => 'System Settings', 'route' => 'system.settings', 'active' => 'system.settings*', 'icon' => 'settings', 'permission' => 'system_settings.view'],
                 ['label' => 'System Health', 'route' => 'system.health', 'active' => 'system.health', 'icon' => 'shield', 'permission' => 'system_health.view'],
             ],
