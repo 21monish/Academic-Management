@@ -241,12 +241,49 @@ class ChatbotKnowledgeSeeder extends Seeder
             ],
             [
                 'questions' => [
+                    'How do I manage plans?',
+                    'Manage subscription plans',
+                    'Create license plan',
+                    'Add client plan',
+                    'Where is manage plans?',
+                ],
+                'answer' => 'Go to System > Manage Plans. From there the owner can create plans, edit plan code, name, monthly price, max students, choose enabled features, activate or deactivate plans, and delete only plans that are not assigned to any university/client.',
+            ],
+            [
+                'questions' => [
+                    'How do I assign plan to university?',
+                    'Assign license plan to client',
+                    'Set client subscription',
+                    'Change university plan',
+                ],
+                'answer' => 'Go to Institution > Universities, edit the university/client, then use Subscription & License to select the plan, client status, and expiry date. Only Super Admin can manage the license fields. Plan features decide which modules that client can use.',
+            ],
+            [
+                'questions' => [
+                    'Why is a module locked?',
+                    'Feature locked by plan',
+                    'License feature lock',
+                    'Client cannot access fees',
+                ],
+                'answer' => 'A module can be locked by the client subscription plan. Check System > Manage Plans to see which features the plan includes, then check Institution > Universities > Edit to confirm the client plan, status, and expiry date. Expired, suspended, inactive, or feature-limited plans block matching modules.',
+            ],
+            [
+                'questions' => [
+                    'What is owner admin dashboard?',
+                    'Owner dashboard',
+                    'Client income dashboard',
+                    'Where can I see expired plans?',
+                ],
+                'answer' => 'The Owner Admin Dashboard is shown to Super Admin. It shows clients, active clients, expired or expiring plans, monthly income, annual run rate, active colleges, staff, students, users, storage usage, plan distribution, and quick links for clients, plans, users, settings, and system health.',
+            ],
+            [
+                'questions' => [
                     'What can you help with?',
                     'Help menu',
                     'Show chatbot options',
                     'What questions can I ask?',
                 ],
-                'answer' => 'You can ask about students, staff/faculty, attendance, marks entry, results, exams, hall tickets, fees, receipts, notices, notice attachments, academic setup, users, roles, and password changes.',
+                'answer' => 'You can ask about students, staff/faculty, attendance, marks entry, results, exams, hall tickets, fees, receipts, notices, notice attachments, academic setup, users, roles, password changes, owner dashboard, subscription plans, client licenses, and feature locks.',
             ],
             [
                 'questions' => [
@@ -278,7 +315,7 @@ class ChatbotKnowledgeSeeder extends Seeder
                     'Application help',
                     'How to use GTU ITR?',
                 ],
-                'answer' => 'Use the left sidebar to open modules. Institution manages colleges, departments, users, and roles. People manages staff and students. Academic manages programmes, semesters, subjects, curriculum, and electives. Attendance, Exams, Fees, Leave, Notices, and Reports handle daily academic operations.',
+                'answer' => 'Use the left sidebar to open modules. Institution manages colleges, departments, users, and roles. People manages staff and students. Academic manages programmes, semesters, subjects, curriculum, and electives. Attendance, Exams, Fees, Leave, Notices, and Reports handle daily academic operations. System contains owner tools such as approvals, Manage Plans, settings, and health checks.',
             ],
         ];
     }

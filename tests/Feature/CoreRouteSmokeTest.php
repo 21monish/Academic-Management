@@ -78,7 +78,10 @@ test('core authenticated module pages render', function () {
         'reports.fee-receipts',
         'reports.hall-tickets',
         'reports.staff',
+        'reports.certificates',
         'reports.activity',
+        'approvals.index',
+        'system.plans.index',
         'system.settings',
         'system.health',
     ];

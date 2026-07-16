@@ -19,6 +19,7 @@ use App\Models\StudentFeeLedger;
 use App\Models\StudentPromotion;
 use App\Models\TimetableSlot;
 use App\Services\AccessScopeService;
+use App\Services\ApprovalWorkflowService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,7 +31,10 @@ use Illuminate\Support\Str;
 
 class AutomationController extends Controller
 {
-    public function __construct(private readonly AccessScopeService $accessScope)
+    public function __construct(
+        private readonly AccessScopeService $accessScope,
+        private readonly ApprovalWorkflowService $approvalWorkflow
+    )
     {
     }
 
@@ -470,14 +474,34 @@ class AutomationController extends Controller
 
     private function publishResults($user): int
     {
-        return $this->accessScope
+        $results = $this->accessScope
             ->applyToResults(Result::query(), $user)
             ->where('is_published', false)
-            ->whereNotNull('result_status')
-            ->update([
-                'is_published' => true,
-                'declared_at' => now(),
-            ]);
+            ->whereNotNull('result_status');
+
+        if ($this->approvalWorkflow->requiresApproval($user)) {
+            $resultRows = $results->get();
+
+            foreach ($resultRows as $result) {
+                $this->approvalWorkflow->request(
+                    $user,
+                    ApprovalWorkflowService::PUBLISH_RESULT,
+                    $result,
+                    [
+                        'student_id' => $result->student_id,
+                        'exam_subject_id' => $result->exam_subject_id,
+                        'status' => $result->result_status,
+                    ]
+                );
+            }
+
+            return $resultRows->count();
+        }
+
+        return $results->update([
+            'is_published' => true,
+            'declared_at' => now(),
+        ]);
     }
 
     private function promoteStudents($user): int

@@ -92,6 +92,30 @@ test('chatbot understands rough phrasing and synonyms', function () {
         ->assertJsonPath('answer', fn (string $answer) => str_contains($answer, 'People > Staff'));
 });
 
+test('chatbot answers owner plan and license questions', function () {
+    $user = userWithChatbotPermissions();
+    $this->seed(ChatbotKnowledgeSeeder::class);
+
+    $this->actingAs($user)
+        ->postJson(route('chatbot.ask'), [
+            'question' => 'How do I manage plans?',
+        ])
+        ->assertOk()
+        ->assertJson([
+            'learned' => true,
+            'matched_question' => 'How do I manage plans?',
+        ])
+        ->assertJsonPath('answer', fn (string $answer) => str_contains($answer, 'System > Manage Plans'));
+
+    $this->actingAs($user)
+        ->postJson(route('chatbot.ask'), [
+            'question' => 'client package lock fees',
+        ])
+        ->assertOk()
+        ->assertJson(['learned' => true])
+        ->assertJsonPath('answer', fn (string $answer) => str_contains($answer, 'subscription plan'));
+});
+
 test('chatbot returns suggestions when answer is unknown', function () {
     $user = userWithChatbotPermissions();
     $this->seed(ChatbotKnowledgeSeeder::class);

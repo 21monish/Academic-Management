@@ -144,9 +144,12 @@
                 ['label' => 'Fee Receipts', 'route' => 'reports.fee-receipts', 'active' => 'reports.fee-receipts', 'icon' => 'receipt', 'permission' => 'fee_receipt_report.view'],
                 ['label' => 'Hall Ticket PDF', 'route' => 'reports.hall-tickets', 'active' => 'reports.hall-tickets', 'icon' => 'ticket', 'permission' => 'hall_ticket_report.view'],
                 ['label' => 'Staff Reports', 'route' => 'reports.staff', 'active' => 'reports.staff', 'icon' => 'briefcase', 'permission' => 'staff_report.view'],
+                ['label' => 'Certificates', 'route' => 'reports.certificates', 'active' => 'reports.certificates*', 'icon' => 'receipt', 'permission' => 'certificate.view'],
                 ['label' => 'Activity Logs', 'route' => 'reports.activity', 'active' => 'reports.activity', 'icon' => 'chart', 'permission' => 'activity_log.view'],
             ],
             'System' => [
+                ['label' => 'Approval Requests', 'route' => 'approvals.index', 'active' => 'approvals.*', 'icon' => 'check', 'permission' => ['user.delete', 'student.delete', 'concession.approve', 'result.approve']],
+                ['label' => 'Manage Plans', 'route' => 'system.plans.index', 'active' => 'system.plans.*', 'icon' => 'tag', 'permission' => 'system_settings.view'],
                 ['label' => 'System Settings', 'route' => 'system.settings', 'active' => 'system.settings*', 'icon' => 'settings', 'permission' => 'system_settings.view'],
                 ['label' => 'System Health', 'route' => 'system.health', 'active' => 'system.health', 'icon' => 'shield', 'permission' => 'system_health.view'],
             ],
@@ -196,25 +199,33 @@
 
 <nav>
     <aside class="app-sidebar fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-slate-200/80 bg-white/95 shadow-sm backdrop-blur lg:flex lg:flex-col">
-        <div class="app-sidebar-brand border-b border-slate-200/80 px-5 py-5">
-            <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
+        <div class="app-sidebar-brand px-4 py-4">
+            <a href="{{ route('dashboard') }}" class="app-brand-card flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
                 @if($brandLogoUrl)
-                    <img src="{{ $brandLogoUrl }}" alt="{{ $brandName }} logo" class="h-11 w-11 rounded-lg border border-slate-200 bg-white object-contain p-1 shadow-sm">
+                    <img src="{{ $brandLogoUrl }}" alt="{{ $brandName }} logo" class="h-12 w-12 rounded-lg border border-slate-200 bg-white object-contain p-1">
                 @else
-                    <span class="grid h-11 w-11 place-items-center rounded-lg bg-cyan-700 text-sm font-bold text-white shadow-sm">{{ $brandInitials }}</span>
+                    <span class="grid h-12 w-12 place-items-center rounded-lg bg-cyan-700 text-sm font-black text-white">{{ $brandInitials }}</span>
                 @endif
-                <span class="min-w-0">
+                <span class="min-w-0 flex-1">
                     <span class="block truncate text-base font-black text-slate-950">{{ $brandName }}</span>
-                    <span class="block truncate text-xs font-semibold text-slate-500">{{ $brandSubtitle }}</span>
+                    <span class="block truncate text-xs font-bold text-slate-500">{{ $brandSubtitle }}</span>
                 </span>
             </a>
-            <div class="app-user-badge mt-5 rounded-lg border border-cyan-100 bg-cyan-50 px-3 py-2">
-                <p class="text-xs font-black uppercase text-cyan-800">{{ $displayRoleName }}</p>
-                <p class="mt-0.5 truncate text-xs font-semibold text-cyan-700">{{ $user?->email }}</p>
+
+            <div class="app-user-badge mt-3 rounded-lg border border-cyan-100 px-3 py-2">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="truncate text-xs font-black uppercase text-cyan-800">{{ $displayRoleName }}</p>
+                        <p class="mt-0.5 truncate text-xs font-semibold text-cyan-700">{{ $user?->email }}</p>
+                    </div>
+                    <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white text-xs font-black text-cyan-700 shadow-sm">
+                        {{ strtoupper(substr($user?->name ?? 'U', 0, 1)) }}
+                    </span>
+                </div>
             </div>
         </div>
 
-        <div class="app-sidebar-scroll flex-1 overflow-y-auto px-3 py-4">
+        <div class="app-sidebar-scroll flex-1 overflow-y-auto px-3 pb-4">
             @foreach($navSections as $section => $items)
                 @continue(empty($items))
                 @php
@@ -226,34 +237,35 @@
                     @foreach($items as $item)
                         @php($active = request()->routeIs($item['active']))
                         <a href="{{ route($item['route']) }}"
-                           class="{{ $active ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }} app-nav-link group mb-2 flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition">
-                            <span class="{{ $active ? 'text-cyan-200' : 'text-slate-400 group-hover:text-cyan-700' }} grid h-5 w-5 place-items-center">
+                           class="{{ $active ? 'is-active' : '' }} app-nav-link group mb-3 flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-bold transition">
+                            <span class="app-nav-icon grid h-8 w-8 place-items-center rounded-lg">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">{!! $navIcon($item['icon']) !!}</svg>
                             </span>
-                            <span class="truncate">{{ __($item['label']) }}</span>
+                            <span class="min-w-0 flex-1 truncate">{{ __($item['label']) }}</span>
                         </a>
                     @endforeach
                     @continue
                 @endif
-                <details class="nav-dropdown mb-2 group" data-pinned-open="{{ $sectionPinnedOpen ? 'true' : 'false' }}" onmouseenter="this.open = true" onmouseleave="if (this.dataset.pinnedOpen !== 'true') this.open = false" @if($sectionPinnedOpen) open @endif>
-                    <summary class="{{ $sectionActive ? 'bg-cyan-50 text-cyan-900 ring-1 ring-cyan-100' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950' }} app-nav-section flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2 text-left text-xs font-black uppercase transition [&::-webkit-details-marker]:hidden">
-                        <span class="{{ $sectionActive ? 'text-cyan-700' : 'text-slate-400' }} grid h-5 w-5 place-items-center">
+                <details class="nav-dropdown group mb-2" data-pinned-open="{{ $sectionPinnedOpen ? 'true' : 'false' }}" onmouseenter="this.open = true" onmouseleave="if (this.dataset.pinnedOpen !== 'true') this.open = false" @if($sectionPinnedOpen) open @endif>
+                    <summary class="{{ $sectionActive ? 'is-active' : '' }} app-nav-section flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2.5 text-left transition [&::-webkit-details-marker]:hidden">
+                        <span class="app-nav-icon grid h-8 w-8 place-items-center rounded-lg">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">{!! $navIcon($sectionIcon) !!}</svg>
                         </span>
-                        <span class="min-w-0 flex-1 truncate">{{ $section }}</span>
+                        <span class="min-w-0 flex-1">
+                            <span class="block truncate text-xs font-black uppercase">{{ $section }}</span>
+                            <span class="block text-[11px] font-bold text-slate-400">{{ count($items) }} item{{ count($items) === 1 ? '' : 's' }}</span>
+                        </span>
                         <svg class="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/>
                         </svg>
                     </summary>
-                    <div class="nav-dropdown-panel mt-1 space-y-1 ps-3">
+                    <div class="nav-dropdown-panel mt-1 space-y-1 border-l border-slate-200 ps-3 ms-7">
                         @foreach($items as $item)
                             @php($active = request()->routeIs($item['active']))
                             <a href="{{ route($item['route']) }}"
-                               class="{{ $active ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }} app-nav-link group flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition">
-                                <span class="{{ $active ? 'text-cyan-200' : 'text-slate-400 group-hover:text-cyan-700' }} grid h-5 w-5 place-items-center">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">{!! $navIcon($item['icon']) !!}</svg>
-                                </span>
-                                <span class="truncate">{{ __($item['label']) }}</span>
+                               class="{{ $active ? 'is-active' : '' }} app-nav-link group flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition">
+                                <span class="app-nav-dot"></span>
+                                <span class="min-w-0 flex-1 truncate">{{ __($item['label']) }}</span>
                             </a>
                         @endforeach
                     </div>
@@ -262,40 +274,43 @@
         </div>
 
         <div class="border-t border-slate-200/80 p-3">
-            <div class="app-account-card flex items-center gap-3 rounded-lg bg-slate-50 p-3">
-                <div class="grid h-9 w-9 place-items-center rounded-lg bg-white text-sm font-bold text-cyan-700 shadow-sm">
-                    {{ strtoupper(substr($user?->name ?? 'U', 0, 1)) }}
+            <div class="app-account-card rounded-lg p-3">
+                <div class="flex items-center gap-3">
+                    <div class="grid h-9 w-9 place-items-center rounded-lg bg-white text-sm font-black text-cyan-700 shadow-sm">
+                        {{ strtoupper(substr($user?->name ?? 'U', 0, 1)) }}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm font-bold text-slate-900">{{ $user?->name }}</p>
+                        @if(hasPermission('profile.view'))
+                            <a href="{{ route('profile.edit') }}" class="text-xs font-bold text-cyan-700 hover:text-cyan-800">Profile</a>
+                        @endif
+                    </div>
+                    <form method="POST" action="{{ route('logout') }}" onsubmit="sessionStorage.removeItem(@js('chatbot.session.'.($user?->user_id ?? 'guest')))">
+                        @csrf
+                        <button type="submit" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-black text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600">Exit</button>
+                    </form>
                 </div>
-                <div class="min-w-0 flex-1">
-                    <p class="truncate text-sm font-semibold text-slate-900">{{ $user?->name }}</p>
-                    @if(hasPermission('profile.view'))
-                        <a href="{{ route('profile.edit') }}" class="text-xs font-semibold text-cyan-700 hover:text-cyan-800">Profile</a>
-                    @endif
-                </div>
-                <form method="POST" action="{{ route('logout') }}" onsubmit="sessionStorage.removeItem(@js('chatbot.session.'.($user?->user_id ?? 'guest')))">
-                    @csrf
-                    <button type="submit" class="rounded-lg px-2 py-1 text-xs font-bold text-slate-500 transition hover:bg-white hover:text-red-600">Exit</button>
-                </form>
             </div>
         </div>
     </aside>
 
     <details class="app-mobile-nav group sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 px-4 py-3 shadow-sm backdrop-blur lg:hidden">
         <summary class="flex cursor-pointer list-none items-center justify-between [&::-webkit-details-marker]:hidden">
-            <span class="flex items-center gap-3">
+            <span class="flex min-w-0 items-center gap-3">
                 @if($brandLogoUrl)
                     <img src="{{ $brandLogoUrl }}" alt="{{ $brandName }} logo" class="h-10 w-10 rounded-lg border border-slate-200 bg-white object-contain p-1">
                 @else
-                    <span class="grid h-10 w-10 place-items-center rounded-lg bg-cyan-700 text-xs font-bold text-white">{{ $brandInitials }}</span>
+                    <span class="grid h-10 w-10 place-items-center rounded-lg bg-cyan-700 text-xs font-black text-white">{{ $brandInitials }}</span>
                 @endif
-                <span>
-                    <span class="block text-sm font-bold text-slate-950">{{ $brandName }}</span>
-                    <span class="block text-xs text-slate-500">{{ $brandSubtitle }}</span>
+                <span class="min-w-0">
+                    <span class="block truncate text-sm font-black text-slate-950">{{ $brandName }}</span>
+                    <span class="block truncate text-xs font-bold text-slate-500">{{ $displayRoleName }}</span>
                 </span>
             </span>
 
             <span class="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-slate-700 transition hover:bg-slate-100">
                 <svg class="h-5 w-5 group-open:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h16"/></svg>
+                <svg class="hidden h-5 w-5 group-open:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>
             </span>
         </summary>
 
@@ -306,15 +321,18 @@
                 @if($section === 'Home')
                     @foreach($items as $item)
                         <a href="{{ route($item['route']) }}"
-                           class="{{ request()->routeIs($item['active']) ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100' }} mb-2 block rounded-lg px-3 py-2 text-sm font-semibold">
+                           class="{{ request()->routeIs($item['active']) ? 'is-active' : '' }} app-nav-link mb-2 flex rounded-lg px-3 py-2 text-sm font-bold">
                             {{ __($item['label']) }}
                         </a>
                     @endforeach
                     @continue
                 @endif
-                <details class="nav-dropdown mb-2 group" @if($sectionActive || in_array($section, ['Home', 'Account'], true)) open @endif>
-                    <summary class="{{ $sectionActive ? 'bg-cyan-50 text-cyan-900' : 'text-slate-600 hover:bg-slate-50' }} flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-black uppercase [&::-webkit-details-marker]:hidden">
-                        <span>{{ $section }}</span>
+                <details class="nav-dropdown group mb-2" @if($sectionActive || in_array($section, ['Home', 'Account'], true)) open @endif>
+                    <summary class="{{ $sectionActive ? 'is-active' : '' }} app-nav-section flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-2.5 text-left [&::-webkit-details-marker]:hidden">
+                        <span>
+                            <span class="block text-xs font-black uppercase">{{ $section }}</span>
+                            <span class="block text-[11px] font-bold text-slate-400">{{ count($items) }} item{{ count($items) === 1 ? '' : 's' }}</span>
+                        </span>
                         <svg class="h-4 w-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/>
                         </svg>
@@ -322,7 +340,7 @@
                     <div class="nav-dropdown-panel mt-1 space-y-1 ps-2">
                         @foreach($items as $item)
                             <a href="{{ route($item['route']) }}"
-                               class="{{ request()->routeIs($item['active']) ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100' }} block rounded-lg px-3 py-2 text-sm font-semibold">
+                               class="{{ request()->routeIs($item['active']) ? 'is-active' : '' }} app-nav-link block rounded-lg px-3 py-2 text-sm font-semibold">
                                 {{ __($item['label']) }}
                             </a>
                         @endforeach
@@ -330,18 +348,18 @@
                 </details>
             @endforeach
 
-            <div class="border-t border-slate-100 pt-4">
+            <div class="mt-4 border-t border-slate-100 pt-4">
                 <div class="px-3 pb-3">
-                    <p class="text-xs font-semibold text-cyan-700">{{ $displayRoleName }}</p>
-                    <p class="text-sm font-semibold text-slate-900">{{ $user?->name }}</p>
-                    <p class="text-xs text-slate-500">{{ $user?->email }}</p>
+                    <p class="text-xs font-bold text-cyan-700">{{ $displayRoleName }}</p>
+                    <p class="text-sm font-bold text-slate-900">{{ $user?->name }}</p>
+                    <p class="truncate text-xs text-slate-500">{{ $user?->email }}</p>
                 </div>
                 @if(hasPermission('profile.view'))
-                    <a href="{{ route('profile.edit') }}" class="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100">Profile</a>
+                    <a href="{{ route('profile.edit') }}" class="app-nav-link block rounded-lg px-3 py-2 text-sm font-semibold">Profile</a>
                 @endif
                 <form method="POST" action="{{ route('logout') }}" onsubmit="sessionStorage.removeItem(@js('chatbot.session.'.($user?->user_id ?? 'guest')))">
                     @csrf
-                    <button type="submit" class="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50">Log Out</button>
+                    <button type="submit" class="mt-1 block w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-red-600 hover:bg-red-50">Log Out</button>
                 </form>
             </div>
         </div>

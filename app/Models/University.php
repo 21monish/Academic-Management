@@ -12,10 +12,16 @@ class University extends Model
     protected $guarded = ['university_id'];
     protected $casts = [
         'established_date' => 'date',
+        'license_expires_on' => 'date',
     ];
 
     public function colleges()
     {
         return $this->hasMany(College::class, 'university_id', 'university_id');
+    }
+
+    public function licensePlan()
+    {
+        return $this->belongsTo(LicensePlan::class, 'license_plan_id', 'plan_id');
     }
 }

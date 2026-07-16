@@ -25,7 +25,8 @@
         starterSuggestions: [
             'How do I add a student?',
             'How do I add staff?',
-            'How do I mark attendance?',
+            'How do I manage plans?',
+            'Why is a module locked?',
             'Popular questions'
         ],
         initialMessage: { from: 'bot', text: @js('Hi, I am your '.$chatbotBrandName.' assistant. Ask me anything you have taught me.'), matched: null },

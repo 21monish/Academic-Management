@@ -10,6 +10,11 @@ class Result extends Model
     protected $primaryKey = 'result_id';
     public $timestamps = false;
     protected $guarded = ['result_id'];
+    protected $casts = [
+        'is_atkt' => 'boolean',
+        'is_published' => 'boolean',
+        'declared_at' => 'datetime',
+    ];
 
     public function student()
     {

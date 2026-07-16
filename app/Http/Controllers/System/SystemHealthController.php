@@ -91,6 +91,16 @@ class SystemHealthController extends Controller
                     'detail' => 'Checks saved application branding and support settings.',
                 ],
                 [
+                    'label' => 'License Plans',
+                    'status' => $this->tableHasColumns('license_plans', ['plan_id', 'code', 'monthly_price', 'features'])
+                        && $this->tableHasColumns('universities', ['license_plan_id', 'license_status', 'license_expires_on'])
+                            ? 'Ready'
+                            : 'Missing',
+                    'ok' => $this->tableHasColumns('license_plans', ['plan_id', 'code', 'monthly_price', 'features'])
+                        && $this->tableHasColumns('universities', ['license_plan_id', 'license_status', 'license_expires_on']),
+                    'detail' => 'Checks subscription plan and university license columns.',
+                ],
+                [
                     'label' => 'Default Roles',
                     'status' => $this->defaultRolesReady() ? 'Ready' : 'Missing',
                     'ok' => $this->defaultRolesReady(),

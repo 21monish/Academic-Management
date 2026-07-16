@@ -152,7 +152,7 @@
                 <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
                     <div>
                         <h3 class="text-sm font-bold text-slate-900">Page Wise Permissions</h3>
-                        <p class="mt-1 text-xs text-slate-500">Select exactly which pages and actions this user can access.</p>
+                        <p class="mt-1 text-xs text-slate-500">Select from the pages and actions already available on your account.</p>
                         @if(! $canUpdateUserPermissions)
                             <p class="mt-1 text-xs font-semibold text-amber-700">Read only: you can view this user's permissions, but cannot update them.</p>
                         @endif

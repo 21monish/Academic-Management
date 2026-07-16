@@ -2,7 +2,19 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Students</h2>
-            <a href="{{ route('students.create') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm">+ Add Student</a>
+            <div class="flex flex-wrap items-center justify-end gap-2">
+                @if(hasPermission('student.create'))
+                    <a href="{{ route('students.import-template') }}" class="px-4 py-2 bg-white text-slate-700 rounded-md text-sm border border-slate-200">Template</a>
+                    <form method="POST" action="{{ route('students.import') }}" enctype="multipart/form-data" class="inline-flex">
+                        @csrf
+                        <label for="student_import_file" class="cursor-pointer px-4 py-2 bg-emerald-600 text-white rounded-md text-sm font-semibold">
+                            Import Excel
+                        </label>
+                        <input id="student_import_file" name="file" type="file" accept=".csv,.xlsx" class="hidden" onchange="this.form.submit()">
+                    </form>
+                    <a href="{{ route('students.create') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm">+ Add Student</a>
+                @endif
+            </div>
         </div>
     </x-slot>
 

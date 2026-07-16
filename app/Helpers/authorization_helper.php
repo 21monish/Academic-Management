@@ -2,6 +2,7 @@
 
 use App\Models\Permission;
 use App\Services\AccessScopeService;
+use App\Services\LicenseService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 
@@ -27,12 +28,14 @@ if (! function_exists('hasPermission')) {
                 return false;
             }
 
-            return Permission::whereIn('module_name', $modules)
+            $hasPermission = Permission::whereIn('module_name', $modules)
                 ->where('action', $action)
                 ->whereHas('users', function ($q) use ($user) {
                     $q->where('users.user_id', $user->user_id);
                 })
                 ->exists();
+
+            return $hasPermission && app(LicenseService::class)->canAccessPermission($user, $permissionSlug);
         } catch (\Throwable $exception) {
             report($exception);
 
@@ -123,6 +126,7 @@ if (! function_exists('permissionModuleAliases')) {
             'hall_ticket_report' => ['hall_ticket_report', 'reports', 'hall_ticket'],
             'staff_report' => ['staff_report', 'reports'],
             'activity_log' => ['activity_log', 'reports'],
+            'certificate' => ['certificate', 'reports'],
             'system_settings' => ['system_settings', 'user_management'],
             'system_health' => ['system_health', 'user_management'],
             'dashboard' => ['dashboard'],

@@ -182,6 +182,65 @@ class ReportsController extends Controller
         return view('reports.print.staff', compact('staff'));
     }
 
+    public function certificates(Request $request): View
+    {
+        $students = $this->accessScope->applyToStudents(
+            Student::with(['college.university', 'programme.department', 'category', 'enrollments.semester', 'enrollments.academicYear']),
+            $request->user()
+        )
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $term = $request->string('q');
+                $query->where(function ($inner) use ($term) {
+                    $inner->where('enrollment_no', 'like', "%{$term}%")
+                        ->orWhere('first_name', 'like', "%{$term}%")
+                        ->orWhere('last_name', 'like', "%{$term}%");
+                });
+            })
+            ->orderBy('enrollment_no')
+            ->paginate(25)
+            ->withQueryString();
+
+        return view('reports.certificates', compact('students'));
+    }
+
+    public function certificatePrint(Student $student, string $type): View
+    {
+        abort_unless($this->accessScope->applyToStudents(Student::whereKey($student->student_id), request()->user())->exists(), 403);
+
+        $student->load([
+            'college.university',
+            'programme.department',
+            'category',
+            'enrollments.semester',
+            'enrollments.academicYear',
+            'feeLedgers.academicYear',
+            'feeLedgers.semester',
+        ]);
+
+        $latestEnrollment = $student->enrollments
+            ->sortByDesc(fn ($enrollment) => $enrollment->enrolled_on?->format('Ymd') ?? '00000000')
+            ->first();
+
+        $feeSummary = [
+            'total_amount' => (float) $student->feeLedgers->sum('total_amount'),
+            'concession_amount' => (float) $student->feeLedgers->sum('concession_amount'),
+            'scholarship_amount' => (float) $student->feeLedgers->sum('scholarship_amount'),
+            'net_payable' => (float) $student->feeLedgers->sum('net_payable'),
+            'amount_paid' => (float) $student->feeLedgers->sum('amount_paid'),
+            'balance_due' => (float) $student->feeLedgers->sum('balance_due'),
+        ];
+
+        $certificateTitle = match ($type) {
+            'bonafide' => 'Bonafide Certificate',
+            'leaving' => 'Leaving Certificate',
+            'fee' => 'Fee Certificate',
+            'transfer' => 'Transfer Certificate',
+            default => 'Certificate',
+        };
+
+        return view('reports.print.certificate', compact('student', 'type', 'latestEnrollment', 'feeSummary', 'certificateTitle'));
+    }
+
     public function activity(Request $request): View
     {
         $logs = ActivityLog::with('user')

@@ -3,6 +3,7 @@
 use App\Http\Controllers\UserManagement\UserController;
 use App\Http\Controllers\UserManagement\RoleController;
 use App\Http\Controllers\System\SystemHealthController;
+use App\Http\Controllers\System\LicensePlanController;
 use App\Http\Controllers\System\SystemSettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -39,3 +40,10 @@ Route::get('/system/settings', SystemSettingsController::class)
 Route::put('/system/settings', [SystemSettingsController::class, 'update'])
     ->middleware(['auth', 'permission:system_settings.update'])
     ->name('system.settings.update');
+
+Route::middleware(['auth', 'permission:system_settings.view'])->prefix('/system/plans')->name('system.plans.')->group(function () {
+    Route::get('/', [LicensePlanController::class, 'index'])->name('index');
+    Route::post('/', [LicensePlanController::class, 'store'])->middleware('permission:system_settings.update')->name('store');
+    Route::put('/{plan}', [LicensePlanController::class, 'update'])->middleware('permission:system_settings.update')->name('update');
+    Route::delete('/{plan}', [LicensePlanController::class, 'destroy'])->middleware('permission:system_settings.delete')->name('destroy');
+});

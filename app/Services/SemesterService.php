@@ -11,7 +11,10 @@ use Illuminate\Support\Facades\DB;
 
 class SemesterService
 {
-    public function __construct(protected AccessScopeService $accessScope)
+    public function __construct(
+        protected AccessScopeService $accessScope,
+        protected DataIntegrityService $integrity
+    )
     {
     }
 
@@ -100,6 +103,7 @@ class SemesterService
     public function delete(Semester $semester): bool
     {
         abort_unless($this->accessScope->applyToSemesters(Semester::whereKey($semester->semester_id), request()->user())->exists(), 403);
+        $this->integrity->protectSemesterDelete($semester);
 
         return DB::transaction(function () use ($semester) {
             return (bool) $semester->delete();

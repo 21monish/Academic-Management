@@ -67,21 +67,22 @@ test('email verification status is unchanged when the email address is unchanged
     $this->assertNotNull($user->refresh()->email_verified_at);
 });
 
-test('user can delete their account', function () {
+test('user cannot delete their own account', function () {
     $user = userWithProfilePermissions(['view', 'delete']);
 
     $response = $this
+        ->from('/profile')
         ->actingAs($user)
         ->delete('/profile', [
             'password' => 'password',
         ]);
 
     $response
-        ->assertSessionHasNoErrors()
-        ->assertRedirect('/');
+        ->assertSessionHasErrorsIn('userDeletion', 'password')
+        ->assertRedirect('/profile');
 
-    $this->assertGuest();
-    $this->assertNull($user->fresh());
+    $this->assertAuthenticated();
+    $this->assertNotNull($user->fresh());
 });
 
 test('correct password must be provided to delete account', function () {

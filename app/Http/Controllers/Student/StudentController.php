@@ -14,15 +14,18 @@ use App\Models\Semester;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Services\AccessScopeService;
+use App\Services\StudentImportService;
 use App\Services\StudentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\View\View;
 
 class StudentController extends Controller
 {
     public function __construct(
         protected StudentService $studentService,
+        protected StudentImportService $studentImportService,
         protected AccessScopeService $accessScope
     )
     {
@@ -83,6 +86,35 @@ class StudentController extends Controller
         );
     }
 
+    public function import(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'file' => ['required', 'file', 'mimes:csv,txt,xlsx', 'max:10240'],
+        ]);
+
+        $result = $this->studentImportService->import($validated['file'], $request);
+        $message = $result['created'].' student'.($result['created'] === 1 ? '' : 's').' imported successfully.';
+
+        if ($result['failed'] > 0) {
+            $message .= ' '.$result['failed'].' row'.($result['failed'] === 1 ? '' : 's').' skipped. First issue: '.($result['errors'][0] ?? 'Check the file.');
+        }
+
+        return redirect()->route('students.index')->with('status', $message);
+    }
+
+    public function importTemplate(): StreamedResponse
+    {
+        return response()->streamDownload(function () {
+            $handle = fopen('php://output', 'w');
+
+            foreach ($this->studentImportService->templateRows() as $row) {
+                fputcsv($handle, $row);
+            }
+
+            fclose($handle);
+        }, 'student-import-template.csv', ['Content-Type' => 'text/csv']);
+    }
+
     public function show(Student $student): View
     {
         abort_unless($this->accessScope->applyToStudents(Student::whereKey($student->student_id), request()->user())->exists(), 403);
@@ -136,9 +168,9 @@ class StudentController extends Controller
 
     public function destroy(Student $student): RedirectResponse
     {
-        $this->studentService->delete($student);
+        $deleted = $this->studentService->delete($student);
 
-        return redirect()->route('students.index')->with('status', 'Student deleted.');
+        return redirect()->route('students.index')->with('status', $deleted ? 'Student deleted.' : 'Student delete request sent for approval.');
     }
 
     public function activate(Student $student): RedirectResponse

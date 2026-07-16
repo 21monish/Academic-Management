@@ -21,6 +21,12 @@ Route::middleware(['auth'])->prefix('reports')->name('reports.')->group(function
     Route::get('staff', [ReportsController::class, 'staff'])->middleware('permission:staff_report.view')->name('staff');
     Route::get('staff/{staff}/print', [ReportsController::class, 'staffPrint'])->middleware('permission:staff_report.view')->name('staff.print');
 
+    Route::get('certificates', [ReportsController::class, 'certificates'])->middleware('permission:certificate.view')->name('certificates');
+    Route::get('certificates/{student}/{type}', [ReportsController::class, 'certificatePrint'])
+        ->where('type', 'bonafide|leaving|fee|transfer')
+        ->middleware('permission:certificate.view')
+        ->name('certificates.print');
+
     Route::get('activity', [ReportsController::class, 'activity'])->middleware('permission:activity_log.view')->name('activity');
 
     Route::get('export/{type}', [ReportsController::class, 'export'])->name('export');

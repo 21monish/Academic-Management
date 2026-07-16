@@ -231,7 +231,7 @@
     <div class="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div>
             <h3 class="text-sm font-bold text-slate-900">User Permission Updater</h3>
-            <p class="mt-1 text-xs text-slate-500">Update every page and action permission directly on this user account.</p>
+            <p class="mt-1 text-xs text-slate-500">Assign only the page and action permissions already available on your account.</p>
             <p class="mt-1 text-xs font-semibold text-cyan-700"><span data-permission-count>0</span> permissions selected.</p>
         </div>
         <div class="flex flex-wrap gap-2">

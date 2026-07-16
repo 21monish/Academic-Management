@@ -3,10 +3,10 @@
         <div class="flex flex-wrap items-end justify-between gap-3">
             <div>
                 <h2 class="text-xl font-semibold leading-tight text-slate-900">
-                    {{ $roleName ?? 'User' }} Dashboard
+                    {{ ($roleName ?? null) === 'Super Admin' ? 'Owner Admin Dashboard' : (($roleName ?? 'User').' Dashboard') }}
                 </h2>
                 <p class="mt-1 text-sm text-slate-500">
-                    A permission-aware workspace for your campus operations.
+                    {{ ($roleName ?? null) === 'Super Admin' ? 'Clients, license plans, revenue, expiry risk, and platform usage.' : 'A permission-aware workspace for your campus operations.' }}
                 </p>
             </div>
 
@@ -76,12 +76,17 @@
             'attendanceMarked' => ['label' => 'Attendance Marked', 'format' => 'number', 'tone' => 'emerald'],
             'resultsEntered' => ['label' => 'Results Entered', 'format' => 'number', 'tone' => 'teal'],
             'subjects' => ['label' => 'Subjects', 'format' => 'number', 'tone' => 'indigo'],
+            'activeClients' => ['label' => 'Active Clients', 'format' => 'number', 'tone' => 'emerald'],
+            'expiredPlans' => ['label' => 'Expired Plans', 'format' => 'number', 'tone' => 'amber'],
+            'monthlyRecurringRevenue' => ['label' => 'Monthly Revenue', 'format' => 'money', 'tone' => 'emerald'],
+            'storageUsedMb' => ['label' => 'Storage Used', 'format' => 'mb', 'tone' => 'slate'],
         ];
 
         $formatMetric = function ($value, string $format = 'number'): string {
             return match ($format) {
                 'money' => 'INR '.number_format((float) $value, 2),
                 'percent' => number_format((float) $value, 1).'%',
+                'mb' => number_format((float) $value, 1).' MB',
                 default => number_format((float) $value),
             };
         };
@@ -142,6 +147,7 @@
             ->values();
 
         $notices = collect($dashboardData['notices'] ?? []);
+        $ownerDashboard = ($roleName ?? null) === 'Super Admin' ? ($dashboardData['owner'] ?? null) : null;
         $automationTasks = collect(\App\Http\Controllers\Automation\AutomationController::dashboardTasks())
             ->filter(fn ($task) => $canSeePermission($task['permission'] ?? null))
             ->map(fn ($task, $key) => $task + ['key' => $key])
@@ -382,7 +388,11 @@
                                             <td class="px-3 py-2 text-slate-600">{{ $result->total_marks !== null ? number_format($result->total_marks, 1) : '-' }}</td>
                                             <td class="px-3 py-2 font-bold text-slate-800">{{ $result->grade ?? '-' }}</td>
                                             <td class="px-3 py-2">
-                                                @php($resultTone = $result->result_status === 'Pass' ? 'bg-emerald-100 text-emerald-800' : (($result->result_status === 'Fail') ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-700'))
+                                                @php
+                                                    $resultTone = $result->result_status === 'Pass'
+                                                        ? 'bg-emerald-100 text-emerald-800'
+                                                        : (($result->result_status === 'Fail') ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-700');
+                                                @endphp
                                                 <span class="rounded-md px-2 py-1 text-xs font-bold {{ $resultTone }}">{{ $result->result_status ?? '-' }}</span>
                                             </td>
                                         </tr>
@@ -463,6 +473,180 @@
                 </div>
             </section>
         @else
+        @if($ownerDashboard)
+            @php
+                $ownerTotals = $ownerDashboard['totals'] ?? [];
+                $ownerMoney = $ownerDashboard['money'] ?? [];
+                $ownerStorage = $ownerDashboard['storage'] ?? [];
+                $ownerClients = collect($ownerDashboard['clients'] ?? []);
+                $expiringClients = collect($ownerDashboard['expiringSoon'] ?? []);
+                $planDistribution = collect($ownerDashboard['planDistribution'] ?? []);
+                $maxPlanClients = max((int) $planDistribution->max('value'), 1);
+                $diskUsedPct = $ownerStorage['diskUsedPct'] ?? null;
+            @endphp
+
+            <section class="mb-6 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-black uppercase text-cyan-700">Owner Command Center</p>
+                        <h3 class="mt-1 text-2xl font-black text-slate-950">Clients, License & Revenue</h3>
+                        <p class="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-500">
+                            Track active clients, plan expiry risk, estimated monthly subscription income, platform storage, and usage from one owner view.
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        @if(Route::has('universities.index'))
+                            <a href="{{ route('universities.index') }}" class="rounded-lg bg-cyan-700 px-4 py-2 text-sm font-black text-white">Manage Clients</a>
+                        @endif
+                        @if(Route::has('system.health'))
+                            <a href="{{ route('system.health') }}" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700">System Health</a>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                    <div class="rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-emerald-900">
+                        <p class="text-xs font-black uppercase opacity-70">Active Clients</p>
+                        <p class="mt-2 text-3xl font-black">{{ number_format((float) ($ownerTotals['activeClients'] ?? 0)) }}</p>
+                        <p class="mt-1 text-xs font-bold opacity-75">{{ number_format((float) ($ownerTotals['clients'] ?? 0)) }} total clients</p>
+                    </div>
+                    <div class="rounded-lg border border-cyan-100 bg-cyan-50 p-4 text-cyan-900">
+                        <p class="text-xs font-black uppercase opacity-70">Monthly Income</p>
+                        <p class="mt-2 text-2xl font-black">INR {{ number_format((float) ($ownerMoney['monthlyRecurringRevenue'] ?? 0), 2) }}</p>
+                        <p class="mt-1 text-xs font-bold opacity-75">ARR INR {{ number_format((float) ($ownerMoney['annualRunRate'] ?? 0), 2) }}</p>
+                    </div>
+                    <div class="rounded-lg border border-amber-100 bg-amber-50 p-4 text-amber-900">
+                        <p class="text-xs font-black uppercase opacity-70">Expiry Risk</p>
+                        <p class="mt-2 text-3xl font-black">{{ number_format((float) ($ownerTotals['expiredClients'] ?? 0)) }}</p>
+                        <p class="mt-1 text-xs font-bold opacity-75">{{ $expiringClients->count() }} expiring in 30 days</p>
+                    </div>
+                    <div class="rounded-lg border border-indigo-100 bg-indigo-50 p-4 text-indigo-900">
+                        <p class="text-xs font-black uppercase opacity-70">Active Colleges</p>
+                        <p class="mt-2 text-3xl font-black">{{ number_format((float) ($ownerTotals['activeColleges'] ?? 0)) }}</p>
+                        <p class="mt-1 text-xs font-bold opacity-75">{{ number_format((float) ($ownerTotals['students'] ?? 0)) }} students</p>
+                    </div>
+                    <div class="rounded-lg border border-slate-200 bg-slate-50 p-4 text-slate-900">
+                        <p class="text-xs font-black uppercase opacity-70">Storage</p>
+                        <p class="mt-2 text-3xl font-black">{{ number_format((float) ($ownerStorage['storageMb'] ?? 0), 1) }} MB</p>
+                        <p class="mt-1 text-xs font-bold text-slate-500">{{ $diskUsedPct !== null ? number_format((float) $diskUsedPct, 1).'% disk used' : 'Disk total unavailable' }}</p>
+                    </div>
+                </div>
+
+                <div class="mt-5 grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+                    <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <h4 class="text-sm font-black text-slate-950">Client Status</h4>
+                                <p class="mt-1 text-xs font-semibold text-slate-500">License status, plan and college count.</p>
+                            </div>
+                            <span class="rounded-md bg-white px-2 py-1 text-xs font-black text-slate-600">{{ $ownerClients->count() }}</span>
+                        </div>
+
+                        <div class="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                                <thead class="bg-white text-left text-xs font-black uppercase text-slate-500">
+                                    <tr>
+                                        <th class="px-3 py-2">Client</th>
+                                        <th class="px-3 py-2">Plan</th>
+                                        <th class="px-3 py-2">Status</th>
+                                        <th class="px-3 py-2">Expiry</th>
+                                        <th class="px-3 py-2">Colleges</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @forelse($ownerClients as $client)
+                                        @php
+                                            $status = $client->license_status ?? 'Active';
+                                            $statusClass = match ($status) {
+                                                'Expired' => 'bg-red-100 text-red-800',
+                                                'Suspended' => 'bg-amber-100 text-amber-800',
+                                                'Trial' => 'bg-cyan-100 text-cyan-800',
+                                                default => 'bg-emerald-100 text-emerald-800',
+                                            };
+                                        @endphp
+                                        <tr>
+                                            <td class="px-3 py-2 font-bold text-slate-900">{{ $client->name }}</td>
+                                            <td class="px-3 py-2 text-slate-600">{{ $client->licensePlan?->name ?? 'No Plan' }}</td>
+                                            <td class="px-3 py-2"><span class="rounded-md px-2 py-1 text-xs font-black {{ $statusClass }}">{{ $status }}</span></td>
+                                            <td class="px-3 py-2 text-slate-600">{{ $client->license_expires_on?->format('d M Y') ?? '-' }}</td>
+                                            <td class="px-3 py-2 font-bold text-slate-800">{{ $client->colleges_count }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="5" class="px-3 py-4 text-center text-sm font-semibold text-slate-500">No client universities found.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="space-y-5">
+                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                            <h4 class="text-sm font-black text-slate-950">Plan Distribution</h4>
+                            <div class="mt-4 space-y-3">
+                                @forelse($planDistribution as $plan)
+                                    @php
+                                        $width = max(4, round(((float) ($plan['value'] ?? 0) / $maxPlanClients) * 100));
+                                    @endphp
+                                    <div>
+                                        <div class="mb-1 flex items-center justify-between gap-3 text-xs font-bold text-slate-600">
+                                            <span>{{ $plan['label'] }}</span>
+                                            <span>{{ number_format((float) ($plan['value'] ?? 0)) }}</span>
+                                        </div>
+                                        <div class="h-2 overflow-hidden rounded-full bg-white">
+                                            <div class="h-full rounded-full bg-cyan-700" style="width: {{ $width }}%;"></div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <p class="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-sm font-semibold text-slate-500">No plans configured.</p>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                            <h4 class="text-sm font-black text-slate-950">Usage Snapshot</h4>
+                            <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                                <div class="rounded-lg bg-white p-3">
+                                    <p class="text-xs font-black uppercase text-slate-400">Staff</p>
+                                    <p class="mt-1 text-xl font-black text-slate-900">{{ number_format((float) ($ownerTotals['staff'] ?? 0)) }}</p>
+                                </div>
+                                <div class="rounded-lg bg-white p-3">
+                                    <p class="text-xs font-black uppercase text-slate-400">Users</p>
+                                    <p class="mt-1 text-xl font-black text-slate-900">{{ number_format((float) ($ownerTotals['users'] ?? 0)) }}</p>
+                                </div>
+                                <div class="rounded-lg bg-white p-3">
+                                    <p class="text-xs font-black uppercase text-slate-400">7 Day Activity</p>
+                                    <p class="mt-1 text-xl font-black text-slate-900">{{ number_format((float) ($ownerTotals['activity7Days'] ?? 0)) }}</p>
+                                </div>
+                                <div class="rounded-lg bg-white p-3">
+                                    <p class="text-xs font-black uppercase text-slate-400">ARPC</p>
+                                    <p class="mt-1 text-base font-black text-slate-900">INR {{ number_format((float) ($ownerMoney['averageRevenuePerClient'] ?? 0), 2) }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if($expiringClients->isNotEmpty())
+                    <div class="mt-5 rounded-lg border border-amber-100 bg-amber-50 p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <h4 class="text-sm font-black text-amber-950">Expiring Soon</h4>
+                                <p class="mt-1 text-xs font-semibold text-amber-800">Clients whose plans expire within 30 days.</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                            @foreach($expiringClients as $client)
+                                <div class="rounded-lg bg-white/80 p-3">
+                                    <p class="text-sm font-black text-slate-950">{{ $client->name }}</p>
+                                    <p class="mt-1 text-xs font-bold text-amber-800">{{ $client->licensePlan?->name ?? 'No Plan' }} expires {{ $client->license_expires_on?->format('d M Y') }}</p>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </section>
+        @endif
+
         <section class="grid gap-4 lg:grid-cols-[1fr_360px]">
             <div class="dashboard-hero rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md">
                 <div class="flex flex-wrap items-start justify-between gap-4">

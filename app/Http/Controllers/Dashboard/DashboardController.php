@@ -10,6 +10,7 @@ use App\Models\Department;
 use App\Models\Exam;
 use App\Models\FeePayment;
 use App\Models\HallTicket;
+use App\Models\LicensePlan;
 use App\Models\Lecture;
 use App\Models\Notice;
 use App\Models\Result;
@@ -159,7 +160,7 @@ HTML);
             'staff_updated_at' => $staff?->updated_at?->timestamp,
         ];
 
-        return 'dashboard:payload:v2:'.md5(json_encode($scopeFingerprint));
+        return 'dashboard:payload:v3:'.md5(json_encode($scopeFingerprint));
     }
 
     private function rememberDashboardPayload(string $roleName, ?User $user, ?Student $student, ?Staff $staff): array
@@ -209,6 +210,7 @@ HTML);
             'dashboardData' => [
                 'quickLinks' => $this->quickLinks($roleName),
                 'notices' => collect(),
+                'owner' => null,
             ],
         ];
     }
@@ -360,6 +362,10 @@ HTML);
 
         return [
             'universities' => $scope->applyToUniversities(University::query(), $user)->count(),
+            'activeClients' => $this->activeClientQuery()->count(),
+            'expiredPlans' => $this->expiredClientQuery()->count(),
+            'monthlyRecurringRevenue' => $this->estimatedMonthlyRevenue(),
+            'storageUsedMb' => round($this->storageBytes() / 1048576, 2),
             'colleges' => $scope->applyToColleges(College::query(), $user)->count(),
             'departments' => $scope->applyToDepartments(Department::query(), $user)->count(),
             'staff' => $scope->applyToStaff(Staff::query(), $user)->count(),
@@ -374,6 +380,7 @@ HTML);
     private function dashboardData(string $roleName, ?User $user, ?Student $student, ?Staff $staff): array
     {
         return match ($roleName) {
+            'Super Admin' => $this->ownerDashboardData($user),
             'Student' => $this->studentDashboardData($student),
             'Teaching Staff', 'Non-Teaching Staff' => $this->staffDashboardData($staff),
             'HOD' => $this->hodDashboardData($staff),
@@ -384,6 +391,65 @@ HTML);
                 'notices' => $this->recentNotices($user),
             ],
         };
+    }
+
+    private function ownerDashboardData(?User $user): array
+    {
+        $clients = University::query()
+            ->with('licensePlan')
+            ->withCount('colleges')
+            ->when(
+                $this->licenseColumnExists('license_status'),
+                fn ($query) => $query->orderByRaw("CASE COALESCE(license_status, 'Active') WHEN 'Expired' THEN 1 WHEN 'Suspended' THEN 2 WHEN 'Trial' THEN 3 ELSE 4 END")
+            )
+            ->orderBy('name')
+            ->limit(8)
+            ->get();
+
+        $storageBytes = $this->storageBytes();
+        $diskTotal = @disk_total_space(base_path()) ?: 0;
+        $diskFree = @disk_free_space(base_path()) ?: 0;
+        $diskUsed = max($diskTotal - $diskFree, 0);
+
+        return [
+            'quickLinks' => $this->quickLinks('Super Admin'),
+            'notices' => $this->recentNotices($user),
+            'owner' => [
+                'totals' => [
+                    'clients' => University::query()->count(),
+                    'activeClients' => $this->activeClientQuery()->count(),
+                    'trialClients' => $this->licenseColumnExists('license_status') ? University::query()->where('license_status', 'Trial')->count() : 0,
+                    'expiredClients' => $this->expiredClientQuery()->count(),
+                    'suspendedClients' => $this->licenseColumnExists('license_status') ? University::query()->where('license_status', 'Suspended')->count() : 0,
+                    'activeColleges' => College::query()->where('is_active', true)->count(),
+                    'students' => Student::query()->count(),
+                    'staff' => Staff::query()->count(),
+                    'users' => User::query()->count(),
+                    'activity7Days' => Schema::hasTable('activity_logs') && Schema::hasColumn('activity_logs', 'created_at')
+                        ? ActivityLog::query()->where('created_at', '>=', now()->subDays(7))->count()
+                        : 0,
+                ],
+                'money' => [
+                    'monthlyRecurringRevenue' => $this->estimatedMonthlyRevenue(),
+                    'annualRunRate' => $this->estimatedMonthlyRevenue() * 12,
+                    'averageRevenuePerClient' => $this->averageRevenuePerClient(),
+                ],
+                'storage' => [
+                    'storageBytes' => $storageBytes,
+                    'storageMb' => round($storageBytes / 1048576, 2),
+                    'diskTotalGb' => $diskTotal > 0 ? round($diskTotal / 1073741824, 2) : null,
+                    'diskFreeGb' => $diskFree > 0 ? round($diskFree / 1073741824, 2) : null,
+                    'diskUsedPct' => $diskTotal > 0 ? round(($diskUsed / $diskTotal) * 100, 1) : null,
+                ],
+                'clients' => $clients,
+                'expiringSoon' => $this->expiringClientQuery()
+                    ->with('licensePlan')
+                    ->orderBy('license_expires_on')
+                    ->limit(6)
+                    ->get(),
+                'planDistribution' => $this->planDistribution(),
+            ],
+        ];
     }
 
     private function studentDashboardData(?Student $student): array
@@ -541,6 +607,13 @@ HTML);
                 ['label' => 'Students', 'route' => 'students.index'],
                 ['label' => 'Staff', 'route' => 'staff.index'],
                 ['label' => 'Reports', 'route' => 'reports.students'],
+            ],
+            'Super Admin' => [
+                ['label' => 'Clients', 'route' => 'universities.index'],
+                ['label' => 'Plans', 'route' => 'system.plans.index'],
+                ['label' => 'Users', 'route' => 'users.index'],
+                ['label' => 'System Health', 'route' => 'system.health'],
+                ['label' => 'Settings', 'route' => 'system.settings'],
             ],
         ];
 
@@ -821,6 +894,150 @@ HTML);
             ])
             ->values()
             ->all();
+    }
+
+    private function activeClientQuery(): Builder
+    {
+        $query = University::query();
+
+        if (! $this->licenseColumnExists('license_status')) {
+            return $query;
+        }
+
+        return $query
+            ->whereIn('license_status', ['Active', 'Trial'])
+            ->when($this->licenseColumnExists('license_expires_on'), function ($query) {
+                $query->where(function ($expires) {
+                    $expires->whereNull('license_expires_on')
+                        ->orWhereDate('license_expires_on', '>=', today());
+                });
+            });
+    }
+
+    private function expiredClientQuery(): Builder
+    {
+        $query = University::query();
+
+        if (! $this->licenseColumnExists('license_status')) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where(function ($expired) {
+            $expired->where('license_status', 'Expired');
+
+            if ($this->licenseColumnExists('license_expires_on')) {
+                $expired->orWhereDate('license_expires_on', '<', today());
+            }
+        });
+    }
+
+    private function expiringClientQuery(): Builder
+    {
+        $query = University::query();
+
+        if (! $this->licenseColumnExists('license_expires_on')) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query
+            ->whereIn('license_status', ['Active', 'Trial'])
+            ->whereNotNull('license_expires_on')
+            ->whereBetween('license_expires_on', [today(), today()->addDays(30)]);
+    }
+
+    private function estimatedMonthlyRevenue(): float
+    {
+        if (! Schema::hasTable('license_plans') || ! $this->licenseColumnExists('license_plan_id')) {
+            return 0.0;
+        }
+
+        return (float) $this->activeClientQuery()
+            ->join('license_plans', 'universities.license_plan_id', '=', 'license_plans.plan_id')
+            ->where('license_plans.is_active', true)
+            ->sum('license_plans.monthly_price');
+    }
+
+    private function averageRevenuePerClient(): float
+    {
+        if (! $this->licenseColumnExists('license_plan_id')) {
+            return 0.0;
+        }
+
+        $activeClients = max($this->activeClientQuery()->whereNotNull('license_plan_id')->count(), 1);
+
+        return round($this->estimatedMonthlyRevenue() / $activeClients, 2);
+    }
+
+    private function planDistribution(): array
+    {
+        if (! Schema::hasTable('license_plans')) {
+            return [];
+        }
+
+        $plans = LicensePlan::query()
+            ->withCount('universities')
+            ->orderBy('monthly_price')
+            ->get()
+            ->map(fn (LicensePlan $plan) => [
+                'label' => $plan->name,
+                'value' => (int) $plan->universities_count,
+                'price' => (float) $plan->monthly_price,
+            ])
+            ->all();
+
+        $unassigned = $this->licenseColumnExists('license_plan_id')
+            ? University::query()->whereNull('license_plan_id')->count()
+            : University::query()->count();
+
+        if ($unassigned > 0) {
+            $plans[] = [
+                'label' => 'No Plan',
+                'value' => $unassigned,
+                'price' => 0.0,
+            ];
+        }
+
+        return $plans;
+    }
+
+    private function storageBytes(): int
+    {
+        return collect([
+            storage_path('app/uploads'),
+            storage_path('app/generated'),
+            storage_path('app/public'),
+            public_path('uploads'),
+        ])->sum(fn (string $path) => $this->directorySize($path));
+    }
+
+    private function directorySize(string $path): int
+    {
+        if (! is_dir($path)) {
+            return 0;
+        }
+
+        $bytes = 0;
+
+        try {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS)
+            );
+
+            foreach ($iterator as $file) {
+                if ($file->isFile()) {
+                    $bytes += $file->getSize();
+                }
+            }
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+
+        return $bytes;
+    }
+
+    private function licenseColumnExists(string $column): bool
+    {
+        return Schema::hasTable('universities') && Schema::hasColumn('universities', $column);
     }
 
     private function applyNoticeScope(Builder $query, ?User $user): Builder

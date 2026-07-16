@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Permission;
+use App\Services\LicenseService;
 use Illuminate\Foundation\Vite;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
@@ -74,6 +75,7 @@ class AppServiceProvider extends ServiceProvider
             'notice.view',
             'notice.create',
             'report.view',
+            'certificate.view',
         ];
 
         foreach ($moduleAbilities as $ability) {
@@ -104,11 +106,13 @@ class AppServiceProvider extends ServiceProvider
                 return false;
             }
 
-            return Permission::query()
+            $hasPermission = Permission::query()
                 ->whereIn('module_name', $modules)
                 ->where('action', $action)
                 ->whereHas('users', fn ($query) => $query->where('users.user_id', $user->user_id))
                 ->exists();
+
+            return $hasPermission && app(LicenseService::class)->canAccessPermission($user, $ability);
         } catch (Throwable $exception) {
             report($exception);
 

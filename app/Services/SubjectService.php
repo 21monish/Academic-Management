@@ -13,7 +13,10 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class SubjectService
 {
-    public function __construct(protected AccessScopeService $accessScope)
+    public function __construct(
+        protected AccessScopeService $accessScope,
+        protected DataIntegrityService $integrity
+    )
     {
     }
 
@@ -100,6 +103,7 @@ class SubjectService
 
     public function store(array $data): Subject
     {
+        $data = $this->integrity->lockSubjectData($data, request());
         abort_unless($this->accessScope->applyToDepartments(Department::whereKey($data['department_id']), request()->user())->exists(), 403);
         $this->authorizeCurriculumSelection($data);
 
@@ -123,6 +127,7 @@ class SubjectService
     public function update(Subject $subject, array $data): Subject
     {
         abort_unless($this->accessScope->applyToSubjects(Subject::whereKey($subject->subject_id), request()->user())->exists(), 403);
+        $data = $this->integrity->lockSubjectData($data, request());
         abort_unless($this->accessScope->applyToDepartments(Department::whereKey($data['department_id']), request()->user())->exists(), 403);
         $this->authorizeCurriculumSelection($data);
 
@@ -146,6 +151,7 @@ class SubjectService
     public function delete(Subject $subject): void
     {
         abort_unless($this->accessScope->applyToSubjects(Subject::whereKey($subject->subject_id), request()->user())->exists(), 403);
+        $this->integrity->protectSubjectDelete($subject);
 
         $subject->delete();
     }

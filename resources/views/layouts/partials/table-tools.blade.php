@@ -99,6 +99,7 @@
 
             const toolbar = document.createElement('div');
             toolbar.className = 'mb-3 flex flex-wrap items-center justify-end gap-2';
+            const enableImport = table.dataset.importEnabled === 'true';
 
             const importInput = document.createElement('input');
             importInput.type = 'file';
@@ -138,7 +139,11 @@
             );
             exportButton.addEventListener('click', () => exportTable(table, index));
 
-            toolbar.append(importButton, importInput, exportButton);
+            if (enableImport) {
+                toolbar.append(importButton, importInput);
+            }
+
+            toolbar.append(exportButton);
 
             wrapper.parentNode?.insertBefore(toolbar, wrapper);
         });

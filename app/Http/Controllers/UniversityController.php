@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUniversityRequest;
+use App\Models\LicensePlan;
 use App\Models\University;
 use App\Services\AccessScopeService;
+use App\Services\DataIntegrityService;
 use App\Services\UploadService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,7 +16,8 @@ class UniversityController extends Controller
 {
     public function __construct(
         protected AccessScopeService $accessScope,
-        protected UploadService $uploads
+        protected UploadService $uploads,
+        protected DataIntegrityService $integrity
     )
     {
     }
@@ -22,7 +25,7 @@ class UniversityController extends Controller
     public function index(Request $request): View
     {
         $universities = $this->accessScope
-            ->applyToUniversities(University::withCount('colleges'), $request->user())
+            ->applyToUniversities(University::with(['licensePlan'])->withCount('colleges'), $request->user())
             ->when($request->filled('q'), function ($query) use ($request) {
                 $search = $request->string('q')->trim();
 
@@ -42,7 +45,9 @@ class UniversityController extends Controller
 
     public function create(): View
     {
-        return view('universities.create');
+        return view('universities.create', [
+            'licensePlans' => $this->licensePlans(),
+        ]);
     }
 
     public function store(StoreUniversityRequest $request): RedirectResponse
@@ -56,7 +61,10 @@ class UniversityController extends Controller
     {
         abort_unless($this->accessScope->applyToUniversities(University::whereKey($university->university_id), request()->user())->exists(), 403);
 
-        return view('universities.edit', compact('university'));
+        return view('universities.edit', [
+            'university' => $university,
+            'licensePlans' => $this->licensePlans(),
+        ]);
     }
 
     public function update(StoreUniversityRequest $request, University $university): RedirectResponse
@@ -71,6 +79,7 @@ class UniversityController extends Controller
     public function destroy(University $university): RedirectResponse
     {
         abort_unless($this->accessScope->applyToUniversities(University::whereKey($university->university_id), request()->user())->exists(), 403);
+        $this->integrity->protectUniversityDelete($university);
 
         $university->delete();
 
@@ -82,6 +91,10 @@ class UniversityController extends Controller
         $data = $request->validated();
         unset($data['logo']);
 
+        if (! $this->canManageLicense($request)) {
+            unset($data['license_plan_id'], $data['license_status'], $data['license_expires_on']);
+        }
+
         if ($request->hasFile('logo')) {
             $data['logo_url'] = $this->uploads->storePublicUpload($request->file('logo'), 'uploads/logos');
         } elseif ($university) {
@@ -89,5 +102,19 @@ class UniversityController extends Controller
         }
 
         return $data;
+    }
+
+    private function licensePlans()
+    {
+        return LicensePlan::query()
+            ->where('is_active', true)
+            ->orderBy('monthly_price')
+            ->orderBy('name')
+            ->get();
+    }
+
+    private function canManageLicense(Request $request): bool
+    {
+        return strcasecmp($request->user()?->role?->role_name ?? '', 'Super Admin') === 0;
     }
 }

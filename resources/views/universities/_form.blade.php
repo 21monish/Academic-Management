@@ -1,5 +1,8 @@
 {{-- Shared form partial used by create.blade.php and edit.blade.php --}}
-@php $u = $university ?? null; @endphp
+@php
+    $u = $university ?? null;
+    $canManageLicense = strcasecmp(auth()->user()?->role?->role_name ?? '', 'Super Admin') === 0;
+@endphp
 
 <div>
     <x-input-label for="name" value="Name" />
@@ -61,6 +64,41 @@
         <x-input-error :messages="$errors->get('email')" class="mt-2" />
     </div>
 </div>
+
+@if($canManageLicense)
+    <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <h3 class="text-sm font-bold text-slate-900">Subscription & License</h3>
+        <p class="mt-1 text-xs text-slate-500">Controls client access, expiry, and plan-based feature locks for this university.</p>
+        <div class="mt-4 grid gap-4 md:grid-cols-3">
+            <div>
+                <x-input-label for="license_plan_id" value="Plan" />
+                <select id="license_plan_id" name="license_plan_id" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                    <option value="">Unlimited / No plan lock</option>
+                    @foreach (($licensePlans ?? collect()) as $plan)
+                        <option value="{{ $plan->plan_id }}" @selected((string) old('license_plan_id', $u?->license_plan_id) === (string) $plan->plan_id)>
+                            {{ $plan->name }} - Rs {{ number_format((float) $plan->monthly_price, 2) }}/month
+                        </option>
+                    @endforeach
+                </select>
+                <x-input-error :messages="$errors->get('license_plan_id')" class="mt-2" />
+            </div>
+            <div>
+                <x-input-label for="license_status" value="Client Status" />
+                <select id="license_status" name="license_status" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                    @foreach (['Trial', 'Active', 'Suspended', 'Expired'] as $status)
+                        <option value="{{ $status }}" @selected(old('license_status', $u?->license_status ?? 'Active') === $status)>{{ $status }}</option>
+                    @endforeach
+                </select>
+                <x-input-error :messages="$errors->get('license_status')" class="mt-2" />
+            </div>
+            <div>
+                <x-input-label for="license_expires_on" value="Expiry Date" />
+                <x-text-input id="license_expires_on" name="license_expires_on" type="date" class="block mt-1 w-full" :value="old('license_expires_on', $u?->license_expires_on?->format('Y-m-d'))" />
+                <x-input-error :messages="$errors->get('license_expires_on')" class="mt-2" />
+            </div>
+        </div>
+    </div>
+@endif
 
 <div class="rounded-lg border border-cyan-100 bg-cyan-50 p-4">
     <h3 class="text-sm font-bold text-slate-900">UPI QR Payment Settings</h3>

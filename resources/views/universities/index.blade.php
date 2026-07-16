@@ -30,6 +30,7 @@
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Logo</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Colleges</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">License</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Established</th>
                         <th class="px-4 py-2"></th>
                     </tr>
@@ -47,6 +48,15 @@
                             </td>
                             <td class="px-4 py-2">{{ $university->name }}</td>
                             <td class="px-4 py-2">{{ $university->colleges_count }}</td>
+                            <td class="px-4 py-2">
+                                <div class="text-sm font-semibold text-slate-800">{{ $university->licensePlan?->name ?? 'Unlimited' }}</div>
+                                <div class="text-xs text-slate-500">
+                                    {{ $university->license_status ?? 'Active' }}
+                                    @if($university->license_expires_on)
+                                        until {{ $university->license_expires_on->format('Y-m-d') }}
+                                    @endif
+                                </div>
+                            </td>
                             <td class="px-4 py-2">{{ $university->established_date?->format('Y-m-d') }}</td>
                             <td class="px-4 py-2 text-right space-x-2">
                                 <a href="{{ route('universities.edit', $university) }}" class="text-indigo-600 text-sm">Edit</a>
@@ -57,7 +67,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="px-4 py-6 text-center text-gray-500">No universities found.</td></tr>
+                        <tr><td colspan="6" class="px-4 py-6 text-center text-gray-500">No universities found.</td></tr>
                     @endforelse
                 </tbody>
             </table>

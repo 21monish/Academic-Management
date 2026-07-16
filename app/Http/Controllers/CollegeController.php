@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\College;
 use App\Models\University;
 use App\Services\AccessScopeService;
+use App\Services\DataIntegrityService;
 use App\Support\ValidationRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,7 +13,10 @@ use Illuminate\View\View;
 
 class CollegeController extends Controller
 {
-    public function __construct(protected AccessScopeService $accessScope)
+    public function __construct(
+        protected AccessScopeService $accessScope,
+        protected DataIntegrityService $integrity
+    )
     {
     }
 
@@ -116,6 +120,7 @@ class CollegeController extends Controller
     public function destroy(College $college): RedirectResponse
     {
         abort_unless($this->accessScope->applyToColleges(College::whereKey($college->college_id), request()->user())->exists(), 403);
+        $this->integrity->protectCollegeDelete($college);
 
         $college->delete();
 

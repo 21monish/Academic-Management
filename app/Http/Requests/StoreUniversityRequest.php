@@ -12,6 +12,10 @@ class StoreUniversityRequest extends FormRequest
         if (! $this->filled('theme')) {
             $this->merge(['theme' => 'ocean']);
         }
+
+        if (! $this->filled('license_status')) {
+            $this->merge(['license_status' => 'Active']);
+        }
     }
 
     public function authorize(): bool
@@ -33,6 +37,9 @@ class StoreUniversityRequest extends FormRequest
             'upi_name' => ['nullable', 'string', 'max:150'],
             'upi_note_prefix' => ['nullable', 'string', 'max:100'],
             'established_date' => ['nullable', 'date'],
+            'license_plan_id' => ['nullable', 'integer', 'exists:license_plans,plan_id'],
+            'license_status' => ['required', 'in:Trial,Active,Suspended,Expired'],
+            'license_expires_on' => ['nullable', 'date'],
         ];
     }
 }

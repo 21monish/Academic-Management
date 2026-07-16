@@ -6,13 +6,17 @@ use App\Models\College;
 use App\Models\Department;
 use App\Models\University;
 use App\Services\AccessScopeService;
+use App\Services\DataIntegrityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DepartmentController extends Controller
 {
-    public function __construct(protected AccessScopeService $accessScope)
+    public function __construct(
+        protected AccessScopeService $accessScope,
+        protected DataIntegrityService $integrity
+    )
     {
     }
 
@@ -109,6 +113,7 @@ class DepartmentController extends Controller
     public function destroy(Department $department): RedirectResponse
     {
         abort_unless($this->accessScope->applyToDepartments(Department::whereKey($department->dept_id), request()->user())->exists(), 403);
+        $this->integrity->protectDepartmentDelete($department);
 
         $department->delete();
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PasswordChangeController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\Automation\AutomationController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +31,10 @@ require __DIR__.'/users.php';
 require __DIR__.'/chatbot.php';
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('/approvals', [ApprovalController::class, 'index'])->name('approvals.index');
+    Route::patch('/approvals/{approval}/approve', [ApprovalController::class, 'approve'])->name('approvals.approve');
+    Route::patch('/approvals/{approval}/reject', [ApprovalController::class, 'reject'])->name('approvals.reject');
+
     Route::post('/automations/{task}', [AutomationController::class, 'run'])->name('automations.run');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->middleware('permission:profile.view')->name('profile.edit');

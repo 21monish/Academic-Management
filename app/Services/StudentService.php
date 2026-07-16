@@ -17,7 +17,9 @@ class StudentService
     public function __construct(
         protected DatabaseManager $db,
         protected UploadService $uploads,
-        protected AccessScopeService $accessScope
+        protected AccessScopeService $accessScope,
+        protected DataIntegrityService $integrity,
+        protected ApprovalWorkflowService $approvalWorkflow
     )
     {
     }
@@ -102,6 +104,7 @@ class StudentService
     public function create(array $data, Request $request): Student
     {
         return $this->db->transaction(function () use ($data, $request) {
+            $data = $this->integrity->lockStudentData($data, $request);
             $this->authorizeStudentData($data, $request);
 
             $isActive = $data['is_active'] ?? true;
@@ -147,6 +150,7 @@ class StudentService
     {
         $this->db->transaction(function () use ($student, $data, $request) {
             abort_unless($this->accessScope->applyToStudents(Student::whereKey($student->student_id), $request->user())->exists(), 403);
+            $data = $this->integrity->lockStudentData($data, $request);
             $this->authorizeStudentData($data, $request);
 
             $isActive = $data['is_active'] ?? $student->is_active ?? true;
@@ -185,11 +189,22 @@ class StudentService
         });
     }
 
-    public function delete(Student $student): void
+    public function delete(Student $student): bool
     {
-        $this->db->transaction(function () use ($student) {
-            abort_unless($this->accessScope->applyToStudents(Student::whereKey($student->student_id), request()->user())->exists(), 403);
+        abort_unless($this->accessScope->applyToStudents(Student::whereKey($student->student_id), request()->user())->exists(), 403);
 
+        if ($this->approvalWorkflow->requiresApproval(request()->user())) {
+            $this->approvalWorkflow->request(
+                request()->user(),
+                ApprovalWorkflowService::DELETE_STUDENT,
+                $student,
+                ['enrollment_no' => $student->enrollment_no, 'name' => trim($student->first_name.' '.$student->last_name)]
+            );
+
+            return false;
+        }
+
+        $this->db->transaction(function () use ($student) {
             User::query()
                 ->where('reference_type', 'Student')
                 ->where('reference_id', $student->student_id)
@@ -197,6 +212,8 @@ class StudentService
 
             $student->delete();
         });
+
+        return true;
     }
 
     public function setActive(Student $student, bool $active): void

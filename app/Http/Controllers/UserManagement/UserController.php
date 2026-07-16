@@ -11,6 +11,9 @@ use App\Models\University;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Services\AccessScopeService;
+use App\Services\ApprovalWorkflowService;
+use App\Services\DataIntegrityService;
+use App\Services\PermissionAuditService;
 use App\Support\ValidationRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,7 +25,12 @@ use Illuminate\View\View;
 
 class UserController extends Controller
 {
-    public function __construct(protected AccessScopeService $accessScope)
+    public function __construct(
+        protected AccessScopeService $accessScope,
+        protected DataIntegrityService $integrity,
+        protected PermissionAuditService $permissionAudit,
+        protected ApprovalWorkflowService $approvalWorkflow
+    )
     {
     }
 
@@ -72,7 +80,9 @@ class UserController extends Controller
         unset($validated['permissions']);
 
         $user = User::create($validated);
-        $user->permissions()->sync($permissionIds ?? $this->defaultPermissionIdsForRole($roleId));
+        $finalPermissionIds = $permissionIds ?? $this->defaultPermissionIdsForRole($roleId, $request);
+        $user->permissions()->sync($finalPermissionIds);
+        $this->permissionAudit->recordSync($user, [], $finalPermissionIds, $request->user(), 'user_create');
 
         return redirect()->route('users.index')->with('status', 'User '.$user->username.' created successfully.');
     }
@@ -109,9 +119,11 @@ class UserController extends Controller
         $permissionIds = $this->permissionIdsForWrite($validated, $request);
         unset($validated['permissions']);
 
+        $this->integrity->protectSelfAccountUpdate($user, $request, $permissionIds);
+
         $user->update($validated);
         if ($permissionIds !== null) {
-            $user->permissions()->sync($permissionIds);
+            $this->syncDelegatedPermissions($user, $permissionIds, $request, 'user_update');
         }
 
         return redirect()->route('users.index')->with('status', 'User '.$user->username.' updated successfully.');
@@ -133,7 +145,10 @@ class UserController extends Controller
             'permissions.*' => ['integer', 'exists:permissions,permission_id'],
         ]);
 
-        $user->permissions()->sync($validated['permissions'] ?? []);
+        $permissionIds = $this->validatedDelegatedPermissionIds($validated['permissions'] ?? [], $request);
+        $this->integrity->protectSelfAccountUpdate($user, $request, $permissionIds);
+
+        $this->syncDelegatedPermissions($user, $permissionIds, $request, 'permission_update');
 
         return redirect()->route('users.permissions.edit', $user)->with('status', 'User '.$user->username.' permissions updated successfully.');
     }
@@ -176,6 +191,17 @@ class UserController extends Controller
 
         $username = $user->username;
 
+        if ($this->approvalWorkflow->requiresApproval($request->user())) {
+            $this->approvalWorkflow->request(
+                $request->user(),
+                ApprovalWorkflowService::DELETE_USER,
+                $user,
+                ['username' => $username, 'email' => $user->email]
+            );
+
+            return redirect()->route('users.index')->with('status', 'User '.$username.' delete request sent for approval.');
+        }
+
         $user->delete();
 
         return redirect()->route('users.index')->with('status', 'User '.$username.' deleted successfully.');
@@ -186,14 +212,14 @@ class UserController extends Controller
         $user = $extra['user'] ?? null;
         $user?->loadMissing('permissions');
         $hasRolePermissionsTable = Schema::hasTable('role_permissions');
+        $assignablePermissionIds = $this->assignablePermissionIds(request());
 
-        $roles = $this->accessScope->applyToRoles(
+        $roles = $this->assignableRolesQuery(
             UserRole::where('is_active', true)
                 ->whereNotIn('role_name', $this->profileManagedRoleNames())
                 ->when(Schema::hasColumn('user_roles', 'staff_type'), fn ($query) => $query->whereNull('staff_type')),
             request()->user()
-        )
-            ->when($hasRolePermissionsTable, fn ($query) => $query->with('permissions'))
+        )->when($hasRolePermissionsTable, fn ($query) => $query->with('permissions'))
             ->orderBy('role_name')
             ->get();
 
@@ -203,11 +229,15 @@ class UserController extends Controller
             'colleges' => $this->accessScope->applyToColleges(College::where('is_active', true), request()->user())->orderBy('name')->get(),
             'departments' => $this->accessScope->applyToDepartments(Department::where('is_active', true)->with('college'), request()->user())->orderBy('name')->get(),
             'programmes' => $this->accessScope->applyToProgrammes(Programme::where('is_active', true)->with('department.college'), request()->user())->orderBy('name')->get(),
-            'permissionSections' => $this->permissionSections(),
+            'permissionSections' => $this->permissionSections(request()),
             'canUpdateUserPermissions' => hasPermission('user_permission.update'),
             'rolePermissionMap' => $roles->mapWithKeys(fn (UserRole $role) => [
                 (string) $role->role_id => $hasRolePermissionsTable
-                    ? $role->permissions->pluck('permission_id')->map(fn ($id) => (int) $id)->values()
+                    ? $role->permissions
+                        ->pluck('permission_id')
+                        ->map(fn ($id) => (int) $id)
+                        ->intersect($assignablePermissionIds)
+                        ->values()
                     : collect(),
             ]),
             'selectedPermissions' => $user
@@ -216,9 +246,16 @@ class UserController extends Controller
         ];
     }
 
-    private function permissionSections(): array
+    private function permissionSections(Request $request): array
     {
+        $assignablePermissionIds = $this->assignablePermissionIds($request);
+
         $permissions = Permission::query()
+            ->when(
+                $assignablePermissionIds === [],
+                fn ($query) => $query->whereRaw('1 = 0'),
+                fn ($query) => $query->whereIn('permission_id', $assignablePermissionIds)
+            )
             ->orderBy('module_name')
             ->orderBy('action')
             ->get()
@@ -234,7 +271,7 @@ class UserController extends Controller
             'Fees' => ['fee_category', 'fee_structure', 'student_ledger', 'fee_collection', 'receipt', 'concession', 'scholarship', 'fee_report'],
             'Leave' => ['leave_type', 'leave_balance', 'leave_application', 'leave_approval', 'leave_cancellation', 'leave_substitute', 'holiday'],
             'Notices' => ['notice_category', 'notice', 'notice_audience', 'notice_attachment', 'notice_acknowledgement'],
-            'Reports' => ['student_report', 'attendance_report', 'result_card', 'fee_receipt_report', 'hall_ticket_report', 'staff_report', 'activity_log'],
+            'Reports' => ['student_report', 'attendance_report', 'result_card', 'fee_receipt_report', 'hall_ticket_report', 'staff_report', 'activity_log', 'certificate'],
             'System' => ['system_settings', 'system_health'],
         ];
 
@@ -254,6 +291,12 @@ class UserController extends Controller
 
         if ($role) {
             abort_unless($this->accessScope->applyToRoles(UserRole::whereKey($role->role_id), $request->user())->exists(), 403);
+
+            if (! $this->canAssignRole($request->user(), $role)) {
+                throw ValidationException::withMessages([
+                    'role_id' => 'You can only assign roles equal to or lower than your own level.',
+                ]);
+            }
         }
 
         if (in_array($roleName, $this->profileManagedRoleNames(), true) || filled($role?->staff_type)) {
@@ -262,9 +305,13 @@ class UserController extends Controller
             ]);
         }
 
+        $adminUniversityRule = $roleName === 'Admin' && ! $request->user()?->university_id
+            ? 'required'
+            : 'nullable';
+
         $validated = $request->validate([
             'role_id' => ['nullable', 'exists:user_roles,role_id'],
-            'university_id' => [$roleName === 'Admin' ? 'required' : 'nullable', 'exists:universities,university_id'],
+            'university_id' => [$adminUniversityRule, 'exists:universities,university_id'],
             'college_id' => ['nullable', 'exists:colleges,college_id'],
             'dept_id' => ['nullable', 'exists:departments,dept_id'],
             'programme_id' => ['nullable', 'exists:programmes,programme_id'],
@@ -296,20 +343,36 @@ class UserController extends Controller
             return null;
         }
 
-        return collect($validated['permissions'] ?? [])
+        return $this->validatedDelegatedPermissionIds($validated['permissions'] ?? [], $request);
+    }
+
+    private function validatedDelegatedPermissionIds(array $permissionIds, Request $request): array
+    {
+        $permissionIds = collect($permissionIds)
             ->map(fn ($id) => (int) $id)
             ->unique()
             ->values()
             ->all();
+
+        $assignablePermissionIds = $this->assignablePermissionIds($request);
+        $unauthorizedPermissionIds = array_values(array_diff($permissionIds, $assignablePermissionIds));
+
+        if ($unauthorizedPermissionIds !== []) {
+            throw ValidationException::withMessages([
+                'permissions' => 'You can only assign permissions that are already assigned to your account.',
+            ]);
+        }
+
+        return $permissionIds;
     }
 
-    private function defaultPermissionIdsForRole(?int $roleId): array
+    private function defaultPermissionIdsForRole(?int $roleId, Request $request): array
     {
         if (! $roleId) {
             return [];
         }
 
-        return UserRole::query()
+        $rolePermissionIds = UserRole::query()
             ->whereKey($roleId)
             ->with('permissions:permissions.permission_id')
             ->first()
@@ -317,16 +380,90 @@ class UserController extends Controller
             ->pluck('permission_id')
             ->map(fn ($id) => (int) $id)
             ->all() ?? [];
+
+        return array_values(array_intersect($rolePermissionIds, $this->assignablePermissionIds($request)));
+    }
+
+    private function assignablePermissionIds(Request $request): array
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return [];
+        }
+
+        return $user->permissions()
+            ->pluck('permissions.permission_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function syncDelegatedPermissions(User $user, array $permissionIds, Request $request, string $context): void
+    {
+        $beforePermissionIds = $user->permissions()
+            ->pluck('permissions.permission_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $assignablePermissionIds = $this->assignablePermissionIds($request);
+        $preservedPermissionQuery = $user->permissions();
+
+        if ($assignablePermissionIds !== []) {
+            $preservedPermissionQuery->whereNotIn('permissions.permission_id', $assignablePermissionIds);
+        }
+
+        $preservedPermissionIds = $preservedPermissionQuery
+            ->pluck('permissions.permission_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $afterPermissionIds = array_values(array_unique(array_merge($preservedPermissionIds, $permissionIds)));
+
+        $user->permissions()->sync($afterPermissionIds);
+        $this->permissionAudit->recordSync($user, $beforePermissionIds, $afterPermissionIds, $request->user(), $context);
     }
 
     private function normalizeHierarchy(array $validated, ?string $roleName, Request $request): array
     {
-        if ($request->user()?->university_id) {
-            $validated['university_id'] = $request->user()->university_id;
+        $currentUser = $request->user();
+        $currentScope = $this->accessScope->forUser($currentUser);
+
+        if (
+            $currentUser?->role?->role_name !== 'Super Admin'
+            && empty($currentScope['university_id'])
+            && empty($currentScope['college_id'])
+            && empty($currentScope['dept_id'])
+            && empty($currentScope['programme_ids'])
+        ) {
+            throw ValidationException::withMessages([
+                'university_id' => 'You can only create users inside your assigned hierarchy.',
+            ]);
+        }
+
+        if ($currentUser?->programme_id) {
+            $validated['programme_id'] = $currentUser->programme_id;
+        } elseif ($currentUser?->dept_id && empty($validated['programme_id'])) {
+            $validated['dept_id'] = $currentUser->dept_id;
+        } elseif ($currentUser?->college_id && empty($validated['dept_id']) && empty($validated['programme_id'])) {
+            $validated['college_id'] = $currentUser->college_id;
+        } elseif ($currentUser?->university_id && empty($validated['college_id']) && empty($validated['dept_id']) && empty($validated['programme_id'])) {
+            $validated['university_id'] = $currentUser->university_id;
+        }
+
+        if (! empty($validated['programme_id'])) {
+            abort_unless($this->accessScope->applyToProgrammes(Programme::whereKey($validated['programme_id']), $currentUser)->exists(), 403);
+            $programme = Programme::with('department.college')->find($validated['programme_id']);
+            $validated['dept_id'] = $programme?->dept_id;
+            $validated['college_id'] = $programme?->department?->college_id;
+            $validated['university_id'] = $programme?->department?->college?->university_id;
+
+            return $validated;
         }
 
         if (! empty($validated['dept_id'])) {
-            abort_unless($this->accessScope->applyToDepartments(Department::whereKey($validated['dept_id']), $request->user())->exists(), 403);
+            abort_unless($this->accessScope->applyToDepartments(Department::whereKey($validated['dept_id']), $currentUser)->exists(), 403);
             $department = Department::with('college')->find($validated['dept_id']);
             $validated['college_id'] = $department?->college_id;
             $validated['university_id'] = $department?->college?->university_id;
@@ -336,15 +473,91 @@ class UserController extends Controller
         }
 
         if (! empty($validated['college_id'])) {
-            abort_unless($this->accessScope->applyToColleges(College::whereKey($validated['college_id']), $request->user())->exists(), 403);
+            abort_unless($this->accessScope->applyToColleges(College::whereKey($validated['college_id']), $currentUser)->exists(), 403);
             $college = College::find($validated['college_id']);
             $validated['university_id'] = $college?->university_id;
+            $validated['dept_id'] = null;
+            $validated['programme_id'] = null;
+
+            return $validated;
+        }
+
+        if (! empty($validated['university_id'])) {
+            abort_unless($this->accessScope->applyToUniversities(University::whereKey($validated['university_id']), $currentUser)->exists(), 403);
         }
 
         $validated['dept_id'] = null;
         $validated['programme_id'] = null;
+        $validated['college_id'] = null;
+
+        if (($currentScope['level'] ?? null) !== 'system' && empty($validated['university_id'])) {
+            throw ValidationException::withMessages([
+                'university_id' => 'You can only create users inside your assigned hierarchy.',
+            ]);
+        }
 
         return $validated;
+    }
+
+    private function assignableRolesQuery($query, ?User $user)
+    {
+        $rank = $this->roleDelegationRankForUser($user);
+        $blockedRoleNames = collect($this->roleDelegationRanks())
+            ->filter(fn (int $roleRank) => $roleRank > $rank)
+            ->keys()
+            ->all();
+
+        return $this->accessScope->applyToRoles($query, $user)
+            ->when($blockedRoleNames !== [], fn ($roles) => $roles->whereNotIn('role_name', $blockedRoleNames));
+    }
+
+    private function canAssignRole(?User $user, UserRole $role): bool
+    {
+        return $this->roleDelegationRankForRole($role) <= $this->roleDelegationRankForUser($user);
+    }
+
+    private function roleDelegationRankForUser(?User $user): int
+    {
+        if (! $user) {
+            return 0;
+        }
+
+        if ($user->role?->role_name === 'Super Admin') {
+            return 100;
+        }
+
+        $roleRank = $this->roleDelegationRankForRole($user->role);
+        $scopeRank = match (true) {
+            filled($user->programme_id) => 30,
+            filled($user->dept_id) => 40,
+            filled($user->college_id) => 60,
+            filled($user->university_id) => 80,
+            default => $roleRank,
+        };
+
+        return min($roleRank, $scopeRank);
+    }
+
+    private function roleDelegationRankForRole(?UserRole $role): int
+    {
+        if (! $role) {
+            return 20;
+        }
+
+        return $this->roleDelegationRanks()[$role->role_name] ?? 20;
+    }
+
+    private function roleDelegationRanks(): array
+    {
+        return [
+            'Super Admin' => 100,
+            'Admin' => 80,
+            'University Admin' => 80,
+            'Principal' => 60,
+            'College Admin' => 60,
+            'HOD' => 40,
+            'Department Admin' => 40,
+        ];
     }
 
     private function abortIfLinkedProfileAccount(User $user): void

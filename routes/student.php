@@ -9,6 +9,8 @@ Route::middleware(['auth', 'permission:student.view'])->prefix('students')->name
     Route::get('/', [StudentController::class, 'index'])->name('index');
     Route::get('/create', [StudentController::class, 'create'])->middleware('permission:student.create')->name('create');
     Route::post('/', [StudentController::class, 'store'])->middleware('permission:student.create')->name('store');
+    Route::post('/import', [StudentController::class, 'import'])->middleware('permission:student.create')->name('import');
+    Route::get('/import-template', [StudentController::class, 'importTemplate'])->middleware('permission:student.create')->name('import-template');
 
     Route::post('/{student}/enrollments', [StudentEnrollmentController::class, 'store'])->middleware('permission:student.update')->name('enrollments.store');
     Route::patch('/{student}/enrollments/{enrollment}', [StudentEnrollmentController::class, 'update'])->middleware('permission:student.update')->name('enrollments.update');

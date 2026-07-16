@@ -11,7 +11,8 @@ class ProgrammeService
 {
     public function __construct(
         protected DatabaseManager $db,
-        protected AccessScopeService $accessScope
+        protected AccessScopeService $accessScope,
+        protected DataIntegrityService $integrity
     )
     {
     }
@@ -116,6 +117,7 @@ class ProgrammeService
     public function delete(Programme $programme): void
     {
         abort_unless($this->accessScope->applyToProgrammes(Programme::whereKey($programme->programme_id), request()->user())->exists(), 403);
+        $this->integrity->protectProgrammeDelete($programme);
 
         $this->db->transaction(function () use ($programme) {
             $programme->delete();

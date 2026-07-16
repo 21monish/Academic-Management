@@ -102,7 +102,7 @@ class ChatbotController extends Controller
         if (in_array($normalizedQuestion, ['help', 'menu', 'options', 'commands', 'what can you do'], true)) {
             return response()->json([
                 'answer' => implode("\n", [
-                    'I can answer questions about students, staff, attendance, exams, fees, notices, reports, users, roles, and password changes.',
+                    'I can answer questions about students, staff, attendance, exams, fees, notices, reports, users, roles, owner dashboard, plans, client licenses, feature locks, and password changes.',
                     'Teachers/admins with chatbot teach permission can teach me using: add question: ... answer: ...',
                     'To change an answer, use: update question: ... answer: ...',
                 ]),
@@ -125,7 +125,7 @@ class ChatbotController extends Controller
             return response()->json([
                 'answer' => $questions
                     ? 'Popular questions: '.implode(', ', $questions).'.'
-                    : 'No popular questions yet. Try asking about students, staff, attendance, exams, fees, or notices.',
+                    : 'No popular questions yet. Try asking about students, staff, attendance, exams, fees, notices, plans, or licenses.',
                 'learned' => true,
                 'matched_question' => 'Popular questions',
                 'suggestions' => $questions ?: $this->starterSuggestions(),
@@ -310,8 +310,8 @@ class ChatbotController extends Controller
         return [
             'How do I add a student?',
             'How do I add staff?',
-            'How do I mark attendance?',
-            'How do I create user account?',
+            'How do I manage plans?',
+            'Why is a module locked?',
         ];
     }
 
@@ -342,6 +342,13 @@ class ChatbotController extends Controller
             'result card' => 'result',
             'fee receipt' => 'receipt',
             'hallticket' => 'hall ticket',
+            'licence' => 'license',
+            'subscription' => 'plan',
+            'package' => 'plan',
+            'client' => 'university',
+            'customer' => 'university',
+            'income' => 'revenue',
+            'earnings' => 'revenue',
         ];
     }
 }

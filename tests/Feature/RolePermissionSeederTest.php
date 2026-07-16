@@ -5,8 +5,10 @@ use App\Models\User;
 use App\Models\UserRole;
 use App\Http\Controllers\UserManagement\UserController;
 use App\Services\AccessScopeService;
+use App\Services\DataIntegrityService;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Http\Request;
 
 test('default roles receive expected permissions', function () {
     $this->seed(RolePermissionSeeder::class);
@@ -22,6 +24,7 @@ test('default roles receive expected permissions', function () {
         ->toBe(['Admin', 'Student', 'Super Admin']);
     expect($superAdmin->permissions()->count())->toBe(Permission::count());
     expect($admin->permissions()->where('module_name', 'user_permission')->where('action', 'update')->exists())->toBeTrue();
+    expect($admin->permissions()->where('module_name', 'certificate')->where('action', 'view')->exists())->toBeTrue();
     expect($admin->permissions()->where('module_name', 'system_health')->where('action', 'view')->exists())->toBeTrue();
     expect($student->permissions()->where('module_name', 'notice')->where('action', 'view')->exists())->toBeTrue();
     expect($student->permissions()->where('module_name', 'attendance_summary')->where('action', 'view')->exists())->toBeTrue();
@@ -65,10 +68,20 @@ test('permission gates resolve super admin role mappings', function () {
 test('user permission updater exposes every page wise permission module', function () {
     $this->seed(RolePermissionSeeder::class);
 
-    $controller = new UserController(app(AccessScopeService::class));
+    $superAdmin = UserRole::where('role_name', 'Super Admin')->firstOrFail();
+    $user = User::factory()->create(['role_id' => $superAdmin->role_id]);
+    $request = Request::create('/users/create');
+    $request->setUserResolver(fn () => $user);
+
+    $controller = new UserController(
+        app(AccessScopeService::class),
+        app(DataIntegrityService::class),
+        app(\App\Services\PermissionAuditService::class),
+        app(\App\Services\ApprovalWorkflowService::class)
+    );
     $method = new ReflectionMethod($controller, 'permissionSections');
     $method->setAccessible(true);
-    $sections = $method->invoke($controller);
+    $sections = $method->invoke($controller, $request);
     $availableModules = collect($sections)->flatMap(fn (array $modules) => array_keys($modules))->values();
 
     $requiredModules = [
@@ -138,6 +151,7 @@ test('user permission updater exposes every page wise permission module', functi
         'hall_ticket_report',
         'staff_report',
         'activity_log',
+        'certificate',
         'system_settings',
         'system_health',
     ];

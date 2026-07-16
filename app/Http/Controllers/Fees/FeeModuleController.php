@@ -17,13 +17,17 @@ use App\Models\Student;
 use App\Models\StudentFeeLedger;
 use App\Models\University;
 use App\Services\AccessScopeService;
+use App\Services\ApprovalWorkflowService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class FeeModuleController extends Controller
 {
-    public function __construct(protected AccessScopeService $accessScope)
+    public function __construct(
+        protected AccessScopeService $accessScope,
+        protected ApprovalWorkflowService $approvalWorkflow
+    )
     {
     }
 
@@ -256,11 +260,34 @@ class FeeModuleController extends Controller
         abort_unless($this->accessScope->applyToStudents(Student::whereKey($data['student_id']), $request->user())->exists(), 403);
         abort_unless($this->accessScope->applyToFeeLedgers(StudentFeeLedger::whereKey($data['ledger_id']), $request->user())->exists(), 403);
 
+        if ($this->approvalWorkflow->requiresApproval($request->user())) {
+            $data['approved_by'] = null;
+            $data['approved_on'] = null;
+            $data['is_active'] = false;
+
+            $concession = FeeConcession::create($data);
+            $this->approvalWorkflow->request(
+                $request->user(),
+                ApprovalWorkflowService::FEE_CONCESSION,
+                $concession,
+                [
+                    'student_id' => $concession->student_id,
+                    'amount' => $concession->concession_amount,
+                    'percent' => $concession->concession_pct,
+                ]
+            );
+
+            return back()->with('status', 'Fee concession request sent for approval.');
+        }
+
         $data['approved_by'] = auth()->id();
+        $data['approved_on'] = $data['approved_on'] ?? now()->toDateString();
+        $data['is_active'] = true;
+
         FeeConcession::create($data);
         $this->syncLedger(StudentFeeLedger::findOrFail($data['ledger_id']));
 
-        return back()->with('status', 'Fee concession saved.');
+        return back()->with('status', 'Fee concession approved and saved.');
     }
 
     public function destroyConcession(FeeConcession $concession): RedirectResponse

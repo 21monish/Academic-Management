@@ -11,6 +11,7 @@ use App\Models\TeachingStaff;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Services\AccessScopeService;
+use App\Services\DataIntegrityService;
 use App\Services\UploadService;
 use App\Support\ValidationRules;
 use Illuminate\Http\RedirectResponse;
@@ -48,7 +49,8 @@ class StaffController extends Controller
 
     public function __construct(
         protected UploadService $uploads,
-        protected AccessScopeService $accessScope
+        protected AccessScopeService $accessScope,
+        protected DataIntegrityService $integrity
     )
     {
     }
@@ -133,6 +135,7 @@ class StaffController extends Controller
             'grade' => ['nullable', 'string', 'max:50'],
         ]);
         $validated = $this->normalizeStaffRole($validated);
+        $validated = $this->integrity->lockStaffData($validated, $request);
 
         abort_unless($this->accessScope->applyToColleges(College::whereKey($validated['college_id']), $request->user())->exists(), 403);
         abort_unless($this->accessScope->applyToRoles(UserRole::whereKey($validated['account_role_id']), $request->user())->exists(), 403);
@@ -269,6 +272,7 @@ class StaffController extends Controller
             'grade' => ['nullable', 'string', 'max:50'],
         ]);
         $validated = $this->normalizeStaffRole($validated);
+        $validated = $this->integrity->lockStaffData($validated, $request);
 
         abort_unless($this->accessScope->applyToStaff(Staff::whereKey($staff->staff_id), $request->user())->exists(), 403);
         abort_unless($this->accessScope->applyToColleges(College::whereKey($validated['college_id']), $request->user())->exists(), 403);

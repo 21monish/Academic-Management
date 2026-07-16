@@ -29,6 +29,9 @@ test('super admin role renders the single permission dashboard', function () {
     $this->actingAs($user)
         ->get(route('dashboard'))
         ->assertOk()
+        ->assertSee('Owner Admin Dashboard')
+        ->assertSee('Owner Command Center')
+        ->assertSee('Monthly Income')
         ->assertSee('Dashboard')
         ->assertSee('direct permissions');
 });
