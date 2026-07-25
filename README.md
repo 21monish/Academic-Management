@@ -77,6 +77,26 @@ System health checks are available inside the application at:
 /system/health
 ```
 
+## Docker
+
+Run the full app stack with Docker:
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate --seed
+docker compose exec app php artisan storage:link
+```
+
+Then open:
+
+```text
+http://localhost:8000
+```
+
+See `docs/DOCKER.md` for the full step-by-step Docker and GitHub Actions guide.
+
 ## Documentation
 
 See `APPLICATION_USER_GUIDE.txt` for the full user-facing guide and module walkthrough.
