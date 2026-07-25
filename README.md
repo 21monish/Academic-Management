@@ -124,3 +124,12 @@ composer run app:post-deploy
 ```
 
 Copy `.env.sevalla.example` into Sevalla environment variables and fill in the real database and app URL values. See `docs/DEPLOYMENT.md` for the full checklist.
+
+Automatic Sevalla deployment is configured in `.github/workflows/ci.yml`. Add these GitHub Actions secrets before relying on it:
+
+```text
+SEVALLA_API_TOKEN
+SEVALLA_APP_ID
+```
+
+After those secrets are set, every successful push to `main` triggers a Sevalla deployment.

@@ -96,3 +96,24 @@ jobs:
           context: .
           push: false
           tags: gtu-itr-app:ci
+
+  deploy-sevalla:
+    name: Deploy To Sevalla
+    runs-on: ubuntu-latest
+    needs:
+      - test
+      - docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+      - name: Trigger Sevalla deployment
+        run: |
+          curl --fail-with-body --request POST \
+            --url "https://api.sevalla.com/v3/applications/${SEVALLA_APP_ID}/deployments" \
+            --header "Authorization: Bearer ${SEVALLA_API_TOKEN}" \
+            --header "Content-Type: application/json" \
+            --data "{\"branch\":\"${GITHUB_REF_NAME}\",\"is_restart\":false}"
+        env:
+          SEVALLA_API_TOKEN: ${{ secrets.SEVALLA_API_TOKEN }}
+          SEVALLA_APP_ID: ${{ secrets.SEVALLA_APP_ID }}
